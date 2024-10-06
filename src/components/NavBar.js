@@ -11,7 +11,7 @@ const NavBar = () => (
         <span className="font-bold text-xl">Finance Calculator</span>
       </Link>
       <div className="space-x-4 flex items-center">
-        <Link to="/sip" className="hover:text-gray-300">SIP Calculator</Link>
+        <Link to="/investmentcalculator" className="hover:text-gray-300">Investment Calculator</Link>
         <Link to="/tax" className="hover:text-gray-300">Tax Calculator</Link>
         <Link to="/retirement" className="hover:text-gray-300">Retirement</Link>
       </div>

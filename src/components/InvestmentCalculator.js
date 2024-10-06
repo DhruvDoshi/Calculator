@@ -13,7 +13,7 @@ const currencies = [
   { code: 'INR', symbol: '₹', maxInvestment: 100000 },
 ];
 
-const SIPCalculator = () => {
+const InvestmentCalculator = () => {
   const [calculatorState, setCalculatorState] = useState({
     isSIP: true,
     monthlyInvestment: 2800,
@@ -335,4 +335,4 @@ const SIPCalculator = () => {
   );
 };
 
-export default SIPCalculator;
+export default InvestmentCalculator;

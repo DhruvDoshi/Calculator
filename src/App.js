@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import NavBar from './components/NavBar';
 import Home from './components/Home';
-import SIPCalculator from './components/SIPCalculator';
+import InvestmentCalculator from './components/InvestmentCalculator';
 
 function App() {
   return (
@@ -11,7 +11,7 @@ function App() {
         <NavBar />
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/sip" element={<SIPCalculator />} />
+          <Route path="/investment" element={<InvestmentCalculator />} />
           {/* Add routes for Tax and Retirement calculators when they're ready */}
         </Routes>
       </div>
