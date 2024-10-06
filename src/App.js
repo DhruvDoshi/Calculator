@@ -12,6 +12,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/sip" element={<SIPCalculator />} />
+          {/* Add routes for Tax and Retirement calculators when they're ready */}
         </Routes>
       </div>
     </Router>
