@@ -259,18 +259,18 @@ const SIPCalculator = () => {
     if (!result) return null;
 
     return (
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-lg shadow">
-        <h3 className="text-sm font-semibold mb-2 text-white">Investment Breakdown</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-3 text-white">Investment Breakdown</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
           {[
             { label: "Total Duration", value: `${withdrawalStartYear + withdrawalPeriod} years` },
             { label: "Investment Phase", value: `${investmentPeriod} years` },
             { label: "Withdrawal Phase", value: `${withdrawalPeriod} years` },
             { label: "Annual Return Rate", value: `${annualReturn}%` },
           ].map((item, index) => (
-            <div key={index} className="bg-white bg-opacity-20 p-2 rounded-lg">
+            <div key={index} className="bg-white bg-opacity-20 p-3 rounded-lg">
               <p className="text-white mb-1">{item.label}</p>
-              <p className="text-base font-bold text-white">{item.value}</p>
+              <p className="text-xl font-bold text-white">{item.value}</p>
             </div>
           ))}
         </div>
@@ -279,7 +279,7 @@ const SIPCalculator = () => {
   };
 
   return (
-    <div className="calculator-container bg-gray-100 p-4 min-h-screen">
+    <div className="calculator-container bg-gray-100 p-4">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-4">
           <div className="flex space-x-2">
@@ -310,16 +310,16 @@ const SIPCalculator = () => {
             ))}
           </select>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-4">
             {renderParameters()}
           </div>
-          <div className="lg:col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-4">
             {renderSummaryAndResults()}
             {renderResults()}
           </div>
         </div>
-        <div className="mt-6">
+        <div className="mt-4">
           {renderInvestmentBreakdown()}
         </div>
       </div>
