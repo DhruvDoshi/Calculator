@@ -181,18 +181,26 @@ const SIPCalculator = () => {
       <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-xl font-semibold mb-4 text-gray-700">Investment Summary</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div style={{ height: '250px' }}>
+          <div className="flex flex-col justify-center" style={{ height: '250px' }}>
             <Doughnut data={doughnutData} options={{
               responsive: true,
               maintainAspectRatio: false,
-              cutout: '70%',
+              cutout: '60%',
               plugins: {
                 legend: {
                   display: true,
                   position: 'bottom',
-                  labels: { font: { size: 12 } }
+                  labels: { 
+                    font: { size: 12 },
+                    padding: 20
+                  }
                 },
               },
+              layout: {
+                padding: {
+                  bottom: 20
+                }
+              }
             }} />
           </div>
           <div style={{ height: '250px' }}>
