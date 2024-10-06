@@ -85,9 +85,9 @@ const SIPCalculator = () => {
   }, [calculateResults]);
 
   const renderParameters = () => (
-    <div className="space-y-6">
-      <div className="bg-gray-50 p-3 rounded-lg">
-        <h3 className="text-lg font-semibold mb-2 text-gray-700">Investment Parameters</h3>
+    <div className="space-y-3 max-w-sm mx-auto">
+      <div className="bg-gray-50 p-3 rounded-lg shadow">
+        <h3 className="text-sm font-semibold mb-2 text-gray-700">Investment Parameters</h3>
         <DraggableSlider
           label={isSIP ? "Monthly investment" : "Lumpsum amount"}
           value={isSIP ? monthlyInvestment : lumpsumAmount}
@@ -116,8 +116,8 @@ const SIPCalculator = () => {
           currencySymbol=""
         />
       </div>
-      <div className="bg-gray-50 p-3 rounded-lg">
-        <h3 className="text-lg font-semibold mb-2 text-gray-700">Withdrawal Parameters</h3>
+      <div className="bg-gray-50 p-3 rounded-lg shadow">
+        <h3 className="text-sm font-semibold mb-2 text-gray-700">Withdrawal Parameters</h3>
         <DraggableSlider
           label="Withdrawal start year"
           value={withdrawalStartYear}
@@ -165,7 +165,7 @@ const SIPCalculator = () => {
     };
 
     const lineChartData = {
-      labels: Array.from({ length: netWorthData.length }, (_, i) => i),
+      labels: Array.from({ length: netWorthData.length }, (_, i) => new Date().getFullYear() + i),
       datasets: [
         {
           label: 'Net Worth',
@@ -178,75 +178,77 @@ const SIPCalculator = () => {
     };
     
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <h3 className="text-lg font-semibold mb-2 text-gray-700">Investment Summary</h3>
-            <div className="bg-white p-4 rounded-lg shadow">
-              <Doughnut data={doughnutData} options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '70%',
-                plugins: {
-                  legend: {
-                    display: true,
-                    position: 'bottom',
-                  },
+      <div className="bg-white p-3 rounded-lg shadow">
+        <h3 className="text-sm font-semibold mb-2 text-gray-700">Investment Summary</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div style={{ height: '180px' }}>
+            <Doughnut data={doughnutData} options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              cutout: '70%',
+              plugins: {
+                legend: {
+                  display: true,
+                  position: 'bottom',
+                  labels: { font: { size: 10 } }
                 },
-              }} />
-            </div>
+              },
+            }} />
           </div>
-          <div>
-            <h3 className="text-lg font-semibold mb-2 text-gray-700">Net Worth Over Time</h3>
-            <div className="bg-white p-4 rounded-lg shadow">
-              <Line data={lineChartData} options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    display: false,
+          <div style={{ height: '180px' }}>
+            <Line data={lineChartData} options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { 
+                legend: { display: false },
+                title: {
+                  display: true,
+                  text: 'Net Worth Over Time',
+                  font: { size: 12, weight: 'bold' }
+                }
+              },
+              scales: {
+                x: { 
+                  title: { display: true, text: 'Year', font: { size: 10 } },
+                  ticks: { font: { size: 8 } }
+                },
+                y: {
+                  title: { display: true, text: `Net Worth (${currency.symbol})`, font: { size: 10 } },
+                  ticks: { 
+                    callback: (value) => `${currency.symbol}${value.toLocaleString()}`, 
+                    font: { size: 8 } 
                   },
                 },
-                scales: {
-                  x: {
-                    title: {
-                      display: true,
-                      text: 'Year',
-                    },
-                  },
-                  y: {
-                    title: {
-                      display: true,
-                      text: `Net Worth (${currency.symbol})`,
-                    },
-                    ticks: {
-                      callback: (value) => `${currency.symbol}${value.toLocaleString()}`,
-                    },
-                  },
-                },
-              }} />
-            </div>
+              },
+            }} />
           </div>
         </div>
-        <div>
-          <h3 className="text-lg font-semibold mb-2 text-gray-700">Results</h3>
-          <div className="bg-white p-4 rounded-lg shadow grid grid-cols-2 gap-4">
-            <div>
-              <p><strong>Total invested:</strong></p>
-              <p className="text-xl font-bold">{currency.symbol}{result.totalInvestment.toLocaleString()}</p>
-            </div>
-            <div>
-              <p><strong>Total withdrawn:</strong></p>
-              <p className="text-xl font-bold">{currency.symbol}{result.totalWithdrawn.toLocaleString()}</p>
-            </div>
-            <div>
-              <p><strong>Est. returns:</strong></p>
-              <p className="text-xl font-bold">{currency.symbol}{result.totalReturns.toLocaleString()}</p>
-            </div>
-            <div>
-              <p><strong>Final balance:</strong></p>
-              <p className="text-xl font-bold text-blue-600">{currency.symbol}{result.finalBalance.toLocaleString()}</p>
-            </div>
+      </div>
+    );
+  };
+
+  const renderResults = () => {
+    if (!result) return null;
+
+    return (
+      <div className="bg-white p-3 rounded-lg shadow">
+        <h3 className="text-sm font-semibold mb-2 text-gray-700">Results</h3>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <p className="text-gray-600">Total invested:</p>
+            <p className="font-bold">{currency.symbol}{result.totalInvestment.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-gray-600">Total withdrawn:</p>
+            <p className="font-bold">{currency.symbol}{result.totalWithdrawn.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-gray-600">Est. returns:</p>
+            <p className="font-bold">{currency.symbol}{result.totalReturns.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-gray-600">Final balance:</p>
+            <p className="font-bold text-blue-600">{currency.symbol}{result.finalBalance.toLocaleString()}</p>
           </div>
         </div>
       </div>
@@ -257,20 +259,18 @@ const SIPCalculator = () => {
     if (!result) return null;
 
     return (
-      <div className="mt-8">
-        <h3 className="text-xl font-bold mb-4 text-gray-800">Investment Breakdown</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-lg shadow">
+        <h3 className="text-sm font-semibold mb-2 text-white">Investment Breakdown</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
           {[
             { label: "Total Duration", value: `${withdrawalStartYear + withdrawalPeriod} years` },
             { label: "Investment Phase", value: `${investmentPeriod} years` },
             { label: "Withdrawal Phase", value: `${withdrawalPeriod} years` },
             { label: "Annual Return Rate", value: `${annualReturn}%` },
           ].map((item, index) => (
-            <div key={index} className="breakdown-card">
-              <div className="breakdown-content">
-                <h4 className="text-sm font-semibold text-gray-600 mb-1">{item.label}</h4>
-                <p className="text-2xl font-bold text-blue-600">{item.value}</p>
-              </div>
+            <div key={index} className="bg-white bg-opacity-20 p-2 rounded-lg">
+              <p className="text-white mb-1">{item.label}</p>
+              <p className="text-base font-bold text-white">{item.value}</p>
             </div>
           ))}
         </div>
@@ -279,12 +279,12 @@ const SIPCalculator = () => {
   };
 
   return (
-    <div className="calculator-container bg-white">
-      <div className="max-w-7xl mx-auto p-4">
-        <div className="flex justify-between items-center mb-4">
+    <div className="calculator-container bg-gray-100 p-3 text-sm">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex justify-between items-center mb-3">
           <div className="flex space-x-2">
             <button
-              className={`px-4 py-2 rounded-md ${
+              className={`px-3 py-1 text-xs font-semibold rounded-md ${
                 isSIP ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
               }`}
               onClick={() => updateState('isSIP', true)}
@@ -292,7 +292,7 @@ const SIPCalculator = () => {
               SIP
             </button>
             <button
-              className={`px-4 py-2 rounded-md ${
+              className={`px-3 py-1 text-xs font-semibold rounded-md ${
                 !isSIP ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
               }`}
               onClick={() => updateState('isSIP', false)}
@@ -303,18 +303,25 @@ const SIPCalculator = () => {
           <select 
             value={currency.code}
             onChange={handleCurrencyChange}
-            className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
+            className="border border-gray-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
           >
             {currencies.map((c) => (
               <option key={c.code} value={c.code}>{c.code}</option>
             ))}
           </select>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-          <div>{renderParameters()}</div>
-          <div>{renderSummaryAndResults()}</div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-5">
+            {renderParameters()}
+          </div>
+          <div className="lg:col-span-7 space-y-4">
+            {renderSummaryAndResults()}
+            {renderResults()}
+          </div>
         </div>
-        {renderInvestmentBreakdown()}
+        <div className="mt-4">
+          {renderInvestmentBreakdown()}
+        </div>
       </div>
     </div>
   );
