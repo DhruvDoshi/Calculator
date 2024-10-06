@@ -126,6 +126,8 @@ const InvestmentCalculator = () => {
           max={50}
           step={1}
           currencySymbol=""
+          currentYear={new Date().getFullYear()}
+          showYear={true}
         />
         <DraggableSlider
           label="Monthly withdrawal amount"
@@ -266,21 +268,32 @@ const InvestmentCalculator = () => {
   const renderInvestmentBreakdown = () => {
     if (!result) return null;
 
+    const currentYear = new Date().getFullYear();
+    const withdrawalStartActualYear = currentYear + withdrawalStartYear;
+    const withdrawalEndYear = withdrawalStartActualYear + withdrawalPeriod;
+
     return (
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-lg shadow">
         <h3 className="text-lg font-semibold mb-3 text-white">Investment Breakdown</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-          {[
-            { label: "Total Duration", value: `${withdrawalStartYear + withdrawalPeriod} years` },
-            { label: "Investment Phase", value: `${investmentPeriod} years` },
-            { label: "Withdrawal Phase", value: `${withdrawalPeriod} years` },
-            { label: "Annual Return Rate", value: `${annualReturn}%` },
-          ].map((item, index) => (
-            <div key={index} className="bg-white bg-opacity-20 p-3 rounded-lg">
-              <p className="text-white mb-1">{item.label}</p>
-              <p className="text-xl font-bold text-white">{item.value}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
+          <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+            <p className="text-white mb-1">Total Duration</p>
+            <p className="text-xl font-bold text-white">{withdrawalStartYear + withdrawalPeriod} years</p>
+          </div>
+          <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+            <p className="text-white mb-1">Investment Phase</p>
+            <p className="text-xl font-bold text-white">{investmentPeriod} years</p>
+          </div>
+          <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+            <p className="text-white mb-1">Withdrawal Period</p>
+            <p className="text-base font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis">
+              {currency.symbol}{monthlyWithdrawal.toLocaleString()} monthly - {withdrawalStartActualYear} to {withdrawalEndYear}
+            </p>
+          </div>
+          <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+            <p className="text-white mb-1">Annual Return Rate</p>
+            <p className="text-xl font-bold text-white">{annualReturn}%</p>
+          </div>
         </div>
       </div>
     );
