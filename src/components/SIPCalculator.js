@@ -85,9 +85,9 @@ const SIPCalculator = () => {
   }, [calculateResults]);
 
   const renderParameters = () => (
-    <div className="space-y-3 max-w-sm mx-auto">
-      <div className="bg-gray-50 p-3 rounded-lg shadow">
-        <h3 className="text-sm font-semibold mb-2 text-gray-700">Investment Parameters</h3>
+    <div className="space-y-4">
+      <div className="bg-white p-4 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-3 text-gray-700">Investment Parameters</h3>
         <DraggableSlider
           label={isSIP ? "Monthly investment" : "Lumpsum amount"}
           value={isSIP ? monthlyInvestment : lumpsumAmount}
@@ -116,8 +116,8 @@ const SIPCalculator = () => {
           currencySymbol=""
         />
       </div>
-      <div className="bg-gray-50 p-3 rounded-lg shadow">
-        <h3 className="text-sm font-semibold mb-2 text-gray-700">Withdrawal Parameters</h3>
+      <div className="bg-white p-4 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-3 text-gray-700">Withdrawal Parameters</h3>
         <DraggableSlider
           label="Withdrawal start year"
           value={withdrawalStartYear}
@@ -178,10 +178,10 @@ const SIPCalculator = () => {
     };
     
     return (
-      <div className="bg-white p-3 rounded-lg shadow">
-        <h3 className="text-sm font-semibold mb-2 text-gray-700">Investment Summary</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div style={{ height: '180px' }}>
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h3 className="text-xl font-semibold mb-4 text-gray-700">Investment Summary</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div style={{ height: '250px' }}>
             <Doughnut data={doughnutData} options={{
               responsive: true,
               maintainAspectRatio: false,
@@ -190,12 +190,12 @@ const SIPCalculator = () => {
                 legend: {
                   display: true,
                   position: 'bottom',
-                  labels: { font: { size: 10 } }
+                  labels: { font: { size: 12 } }
                 },
               },
             }} />
           </div>
-          <div style={{ height: '180px' }}>
+          <div style={{ height: '250px' }}>
             <Line data={lineChartData} options={{
               responsive: true,
               maintainAspectRatio: false,
@@ -204,19 +204,19 @@ const SIPCalculator = () => {
                 title: {
                   display: true,
                   text: 'Net Worth Over Time',
-                  font: { size: 12, weight: 'bold' }
+                  font: { size: 16, weight: 'bold' }
                 }
               },
               scales: {
                 x: { 
-                  title: { display: true, text: 'Year', font: { size: 10 } },
-                  ticks: { font: { size: 8 } }
+                  title: { display: true, text: 'Year', font: { size: 12 } },
+                  ticks: { font: { size: 10 } }
                 },
                 y: {
-                  title: { display: true, text: `Net Worth (${currency.symbol})`, font: { size: 10 } },
+                  title: { display: true, text: `Net Worth (${currency.symbol})`, font: { size: 12 } },
                   ticks: { 
                     callback: (value) => `${currency.symbol}${value.toLocaleString()}`, 
-                    font: { size: 8 } 
+                    font: { size: 10 } 
                   },
                 },
               },
@@ -231,24 +231,24 @@ const SIPCalculator = () => {
     if (!result) return null;
 
     return (
-      <div className="bg-white p-3 rounded-lg shadow">
-        <h3 className="text-sm font-semibold mb-2 text-gray-700">Results</h3>
-        <div className="grid grid-cols-2 gap-2 text-xs">
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h3 className="text-xl font-semibold mb-4 text-gray-700">Results</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <div>
             <p className="text-gray-600">Total invested:</p>
-            <p className="font-bold">{currency.symbol}{result.totalInvestment.toLocaleString()}</p>
+            <p className="text-lg font-bold">{currency.symbol}{result.totalInvestment.toLocaleString()}</p>
           </div>
           <div>
             <p className="text-gray-600">Total withdrawn:</p>
-            <p className="font-bold">{currency.symbol}{result.totalWithdrawn.toLocaleString()}</p>
+            <p className="text-lg font-bold">{currency.symbol}{result.totalWithdrawn.toLocaleString()}</p>
           </div>
           <div>
             <p className="text-gray-600">Est. returns:</p>
-            <p className="font-bold">{currency.symbol}{result.totalReturns.toLocaleString()}</p>
+            <p className="text-lg font-bold">{currency.symbol}{result.totalReturns.toLocaleString()}</p>
           </div>
           <div>
             <p className="text-gray-600">Final balance:</p>
-            <p className="font-bold text-blue-600">{currency.symbol}{result.finalBalance.toLocaleString()}</p>
+            <p className="text-lg font-bold text-blue-600">{currency.symbol}{result.finalBalance.toLocaleString()}</p>
           </div>
         </div>
       </div>
@@ -279,12 +279,12 @@ const SIPCalculator = () => {
   };
 
   return (
-    <div className="calculator-container bg-gray-100 p-3 text-sm">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex justify-between items-center mb-3">
+    <div className="calculator-container bg-gray-100 p-4 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-4">
           <div className="flex space-x-2">
             <button
-              className={`px-3 py-1 text-xs font-semibold rounded-md ${
+              className={`px-4 py-2 text-sm font-semibold rounded-md ${
                 isSIP ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
               }`}
               onClick={() => updateState('isSIP', true)}
@@ -292,7 +292,7 @@ const SIPCalculator = () => {
               SIP
             </button>
             <button
-              className={`px-3 py-1 text-xs font-semibold rounded-md ${
+              className={`px-4 py-2 text-sm font-semibold rounded-md ${
                 !isSIP ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
               }`}
               onClick={() => updateState('isSIP', false)}
@@ -303,23 +303,23 @@ const SIPCalculator = () => {
           <select 
             value={currency.code}
             onChange={handleCurrencyChange}
-            className="border border-gray-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
           >
             {currencies.map((c) => (
               <option key={c.code} value={c.code}>{c.code}</option>
             ))}
           </select>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-4">
             {renderParameters()}
           </div>
-          <div className="lg:col-span-7 space-y-4">
+          <div className="lg:col-span-8 space-y-6">
             {renderSummaryAndResults()}
             {renderResults()}
           </div>
         </div>
-        <div className="mt-4">
+        <div className="mt-6">
           {renderInvestmentBreakdown()}
         </div>
       </div>
