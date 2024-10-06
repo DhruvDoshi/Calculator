@@ -11,7 +11,7 @@ function App() {
         <NavBar />
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/investment" element={<InvestmentCalculator />} />
+          <Route path="/investmentcalculator" element={<InvestmentCalculator />} />
           {/* Add routes for Tax and Retirement calculators when they're ready */}
         </Routes>
       </div>
