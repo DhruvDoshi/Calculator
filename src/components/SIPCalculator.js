@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Doughnut, Line } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title } from 'chart.js';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title);
 
 const currencies = [
-  { code: 'USD', symbol: '$', maxInvestment: 10000 },
-  { code: 'EUR', symbol: '€', maxInvestment: 10000 },
-  { code: 'GBP', symbol: '£', maxInvestment: 10000 },
-  { code: 'JPY', symbol: '¥', maxInvestment: 1000000 },
-  { code: 'INR', symbol: '₹', maxInvestment: 100000 },
+  { code: 'USD', symbol: '$', maxInvestment: 20000 },
+  { code: 'EUR', symbol: '€', maxInvestment: 20000 },
+  { code: 'GBP', symbol: '£', maxInvestment: 20000 },
+  { code: 'JPY', symbol: '¥', maxInvestment: 2000000 },
+  { code: 'INR', symbol: '₹', maxInvestment: 2000000 },
 ];
 
 const DraggableSlider = ({ label, value, setValue, min, max, step, currencySymbol, currentYear, showYear }) => {
@@ -189,6 +189,7 @@ const SIPCalculator = () => {
   });
   const [currency, setCurrency] = useState(currencies[0]);
   const currentYear = new Date().getFullYear();
+  const [netWorthData, setNetWorthData] = useState([]);
 
   const handleCurrencyChange = (e) => {
     const newCurrency = currencies.find(c => c.code === e.target.value);
@@ -236,23 +237,51 @@ const SIPCalculator = () => {
     });
   }, [monthlyInvestment, annualReturn, investmentPeriod, withdrawalAmount, withdrawalStartYear, withdrawalPeriod]);
 
+  const calculateNetWorthOverTime = useCallback(() => {
+    const monthlyRate = annualReturn / 12 / 100;
+    const totalMonths = Math.max(investmentPeriod, withdrawalStartYear + withdrawalPeriod) * 12;
+    const withdrawalStartMonth = withdrawalStartYear * 12;
+
+    let balance = 0;
+    let netWorthByYear = [];
+
+    for (let month = 1; month <= totalMonths; month++) {
+      if (month <= investmentPeriod * 12) {
+        balance += monthlyInvestment;
+      }
+      
+      balance *= (1 + monthlyRate);
+
+      if (month > withdrawalStartMonth) {
+        balance -= withdrawalAmount;
+      }
+
+      if (month % 12 === 0) {
+        netWorthByYear.push(Math.round(balance));
+      }
+    }
+
+    setNetWorthData(netWorthByYear);
+  }, [monthlyInvestment, annualReturn, investmentPeriod, withdrawalAmount, withdrawalStartYear, withdrawalPeriod]);
+
   useEffect(() => {
     calculateSIP();
-  }, [calculateSIP]);
+    calculateNetWorthOverTime();
+  }, [calculateSIP, calculateNetWorthOverTime]);
 
-  const chartData = {
+  const doughnutChartData = {
     labels: ['Invested amount', 'Est. returns'],
     datasets: [
       {
         data: [result.invested, result.returns],
-        backgroundColor: ['#E0E7FF', '#5367FF'],
-        borderColor: ['#E0E7FF', '#5367FF'],
+        backgroundColor: ['#BFDBFE', '#3B82F6'],
+        borderColor: ['#BFDBFE', '#3B82F6'],
         borderWidth: 1,
       },
     ],
   };
 
-  const chartOptions = {
+  const doughnutChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     cutout: '70%',
@@ -263,109 +292,176 @@ const SIPCalculator = () => {
     },
   };
 
+  const lineChartData = {
+    labels: Array.from({ length: netWorthData.length }, (_, i) => currentYear + i + 1),
+    datasets: [
+      {
+        label: 'Net Worth',
+        data: netWorthData,
+        borderColor: '#3B82F6',
+        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+        tension: 0.1,
+      },
+    ],
+  };
+
+  const lineChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      title: {
+        display: true,
+        text: 'Net Worth Over Time',
+      },
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Year',
+        },
+      },
+      y: {
+        title: {
+          display: true,
+          text: `Net Worth (${currency.symbol})`,
+        },
+        ticks: {
+          callback: (value) => `${currency.symbol}${value.toLocaleString()}`,
+        },
+      },
+    },
+  };
+
   return (
-    <div className="calculator-container p-8 max-w-6xl mx-auto bg-white rounded-xl shadow-lg">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-800">SIP Calculator with SWP</h2>
+    <div className="calculator-container p-4 max-w-7xl mx-auto bg-white rounded-lg shadow-sm">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold text-gray-800">SIP Calculator with SWP</h2>
         <select 
           value={currency.code}
           onChange={handleCurrencyChange}
-          className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
+          className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
         >
           {currencies.map((c) => (
             <option key={c.code} value={c.code}>{c.code}</option>
           ))}
         </select>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        <div>
-          <DraggableSlider
-            label="Monthly investment"
-            value={monthlyInvestment}
-            setValue={setMonthlyInvestment}
-            min={100}
-            max={currency.maxInvestment}
-            step={currency.code === 'INR' ? 500 : 100}
-            currencySymbol={currency.symbol}
-          />
-          <DraggableSlider
-            label="Expected return rate (p.a)"
-            value={annualReturn}
-            setValue={setAnnualReturn}
-            min={1}
-            max={30}
-            step={0.1}
-            currencySymbol=""
-          />
-          <DraggableSlider
-            label="Investment period (years)"
-            value={investmentPeriod}
-            setValue={setInvestmentPeriod}
-            min={1}
-            max={30}
-            step={1}
-            currencySymbol=""
-          />
-          <DraggableSlider
-            label="Withdrawal start year"
-            value={withdrawalStartYear}
-            setValue={setWithdrawalStartYear}
-            min={investmentPeriod + 1}
-            max={40}
-            step={1}
-            currencySymbol=""
-            currentYear={currentYear}
-            showYear={true}
-          />
-          <DraggableSlider
-            label="Monthly withdrawal amount"
-            value={withdrawalAmount}
-            setValue={setWithdrawalAmount}
-            min={0}
-            max={currency.maxInvestment}
-            step={currency.code === 'INR' ? 500 : 100}
-            currencySymbol={currency.symbol}  // This line is updated to use the selected currency symbol
-          />
-          <DraggableSlider
-            label="Withdrawal period (years)"
-            value={withdrawalPeriod}
-            setValue={setWithdrawalPeriod}
-            min={1}
-            max={30}
-            step={1}
-            currencySymbol=""
-          />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-5 space-y-4">
+          <div className="bg-gray-50 p-3 rounded-lg">
+            <h3 className="text-lg font-semibold mb-2 text-gray-700">Investment Parameters</h3>
+            <DraggableSlider
+              label="Monthly investment"
+              value={monthlyInvestment}
+              setValue={setMonthlyInvestment}
+              min={100}
+              max={currency.maxInvestment}
+              step={currency.code === 'INR' ? 500 : 100}
+              currencySymbol={currency.symbol}
+            />
+            <DraggableSlider
+              label="Expected return rate (p.a)"
+              value={annualReturn}
+              setValue={setAnnualReturn}
+              min={1}
+              max={30}
+              step={0.1}
+              currencySymbol=""
+            />
+            <DraggableSlider
+              label="Investment period (years)"
+              value={investmentPeriod}
+              setValue={setInvestmentPeriod}
+              min={1}
+              max={30}
+              step={1}
+              currencySymbol=""
+            />
+          </div>
+          <div className="bg-gray-50 p-3 rounded-lg">
+            <h3 className="text-lg font-semibold mb-2 text-gray-700">Withdrawal Parameters</h3>
+            <DraggableSlider
+              label="Withdrawal start year"
+              value={withdrawalStartYear}
+              setValue={setWithdrawalStartYear}
+              min={investmentPeriod + 1}
+              max={40}
+              step={1}
+              currencySymbol=""
+              currentYear={currentYear}
+              showYear={true}
+            />
+            <DraggableSlider
+              label="Monthly withdrawal amount"
+              value={withdrawalAmount}
+              setValue={setWithdrawalAmount}
+              min={0}
+              max={currency.maxInvestment}
+              step={currency.code === 'INR' ? 500 : 100}
+              currencySymbol={currency.symbol}
+            />
+            <DraggableSlider
+              label="Withdrawal period (years)"
+              value={withdrawalPeriod}
+              setValue={setWithdrawalPeriod}
+              min={1}
+              max={30}
+              step={1}
+              currencySymbol=""
+            />
+          </div>
         </div>
-        <div>
-          <div className="h-64 mb-8">
-            <Doughnut data={chartData} options={chartOptions} />
+        <div className="lg:col-span-7 space-y-4">
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold mb-2 text-gray-700">Investment Summary</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="h-48">
+                  <Doughnut data={doughnutChartData} options={doughnutChartOptions} />
+                </div>
+                <div className="flex justify-center space-x-8 mt-2">
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-blue-200 mr-2 rounded-full"></div>
+                    <span className="text-xs text-gray-600">Invested amount</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-blue-500 mr-2 rounded-full"></div>
+                    <span className="text-xs text-gray-600">Est. returns</span>
+                  </div>
+                </div>
+              </div>
+              <div className="h-64">
+                <Line data={lineChartData} options={lineChartOptions} />
+              </div>
+            </div>
           </div>
-          <div className="mb-6 flex justify-center space-x-6">
-            <div className="flex items-center">
-              <div className="w-4 h-4 bg-blue-200 mr-2 rounded-full"></div>
-              <span className="text-sm text-gray-600">Invested amount</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-4 bg-blue-500 mr-2 rounded-full"></div>
-              <span className="text-sm text-gray-600">Est. returns</span>
-            </div>
-          </div>
-          <div className="space-y-4 bg-gray-50 p-6 rounded-lg">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Total invested</span>
-              <span className="font-semibold text-gray-800">{currency.symbol}{result.invested.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Est. returns</span>
-              <span className="font-semibold text-gray-800">{currency.symbol}{result.returns.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Total withdrawn</span>
-              <span className="font-semibold text-gray-800">{currency.symbol}{result.totalWithdrawn.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between pt-4 border-t">
-              <span className="text-gray-600">Final balance</span>
-              <span className="font-bold text-xl text-blue-600">{currency.symbol}{result.finalBalance.toLocaleString()}</span>
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold mb-2 text-gray-700">Results</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="mb-2">
+                  <span className="text-sm text-gray-600">Total invested</span>
+                  <div className="text-lg font-semibold text-gray-800">{currency.symbol}{result.invested.toLocaleString()}</div>
+                </div>
+                <div>
+                  <span className="text-sm text-gray-600">Est. returns</span>
+                  <div className="text-lg font-semibold text-gray-800">{currency.symbol}{result.returns.toLocaleString()}</div>
+                </div>
+              </div>
+              <div>
+                <div className="mb-2">
+                  <span className="text-sm text-gray-600">Total withdrawn</span>
+                  <div className="text-lg font-semibold text-gray-800">{currency.symbol}{result.totalWithdrawn.toLocaleString()}</div>
+                </div>
+                <div>
+                  <span className="text-sm text-gray-600">Final balance</span>
+                  <div className="text-xl font-bold text-blue-600">{currency.symbol}{result.finalBalance.toLocaleString()}</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
