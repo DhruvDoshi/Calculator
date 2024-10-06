@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 
 const DraggableSlider = ({ label, value, setValue, min, max, step, currencySymbol, currentYear, showYear }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -49,10 +49,10 @@ const DraggableSlider = ({ label, value, setValue, min, max, step, currencySymbo
 
   return (
     <div className="mb-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
-        <label className="text-sm font-medium text-gray-600 mb-1 sm:mb-0">{label}</label>
+      <div className="flex justify-between items-center mb-2">
+        <label className="text-sm font-medium text-gray-600">{label}</label>
         <div 
-          className="bg-blue-50 px-3 py-1 rounded-full cursor-pointer transition duration-300 hover:bg-blue-100 w-full sm:w-auto text-center sm:text-left"
+          className="bg-blue-50 px-3 py-1 rounded-full cursor-pointer transition duration-300 hover:bg-blue-100"
           onClick={() => setIsEditing(true)}
         >
           {isEditing ? (
@@ -62,7 +62,7 @@ const DraggableSlider = ({ label, value, setValue, min, max, step, currencySymbo
               onChange={handleInputChange}
               onBlur={handleInputBlur}
               onKeyDown={handleKeyDown}
-              className="w-full sm:w-24 text-center sm:text-right bg-transparent border-none focus:outline-none"
+              className="w-24 text-right bg-transparent border-none focus:outline-none"
               autoFocus
             />
           ) : (
