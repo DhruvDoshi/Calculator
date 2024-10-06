@@ -172,9 +172,24 @@ const InvestmentCalculator = () => {
         {
           label: 'Net Worth',
           data: netWorthData,
-          borderColor: '#3B82F6',
-          backgroundColor: 'rgba(59, 130, 246, 0.5)',
+          borderColor: (context) => {
+            const index = context.dataIndex;
+            const value = context.dataset.data[index];
+            return value < 0 ? 'red' : '#3B82F6';
+          },
+          backgroundColor: (context) => {
+            const index = context.dataIndex;
+            const value = context.dataset.data[index];
+            return value < 0 ? 'rgba(255, 0, 0, 0.5)' : 'rgba(59, 130, 246, 0.5)';
+          },
           tension: 0.1,
+          segment: {
+            borderColor: (context) => {
+              const prev = context.p0.parsed.y;
+              const curr = context.p1.parsed.y;
+              return prev < 0 || curr < 0 ? 'red' : '#3B82F6';
+            },
+          },
         },
       ],
     };
@@ -225,7 +240,7 @@ const InvestmentCalculator = () => {
                 y: {
                   title: { display: true, text: `Net Worth (${currency.symbol})`, font: { size: 12 } },
                   ticks: { 
-                    callback: (value) => `${currency.symbol}${value.toLocaleString()}`, 
+                    callback: (value) => `${value < 0 ? '-' : ''}${currency.symbol}${Math.abs(value).toLocaleString()}`, 
                     font: { size: 10 } 
                   },
                 },
