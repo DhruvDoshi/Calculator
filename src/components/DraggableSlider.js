@@ -1,32 +1,36 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 
 const DraggableSlider = ({ label, value, setValue, min, max, step, currencySymbol, currentYear, showYear }) => {
-  const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(value);
   const sliderRef = useRef(null);
 
-  const updateValue = (clientX) => {
+  const updateValue = useCallback((clientX) => {
     const rect = sliderRef.current.getBoundingClientRect();
-    const percentage = (clientX - rect.left) / rect.width;
+    const percentage = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     const newValue = Math.round((percentage * (max - min) + min) / step) * step;
     setValue(Math.min(max, Math.max(min, newValue)));
-  };
+  }, [min, max, step, setValue]);
 
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    updateValue(e.clientX);
-  };
-
-  const handleMouseMove = (e) => {
-    if (isDragging) {
-      updateValue(e.clientX);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+  const handleStart = useCallback((e) => {
+    e.preventDefault();
+    const handleMove = (moveEvent) => {
+      moveEvent.preventDefault();
+      const clientX = moveEvent.type.includes('mouse') ? moveEvent.clientX : moveEvent.touches[0].clientX;
+      updateValue(clientX);
+    };
+    const handleEnd = () => {
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchend', handleEnd);
+    };
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('touchmove', handleMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchend', handleEnd);
+    updateValue(e.type.includes('mouse') ? e.clientX : e.touches[0].clientX);
+  }, [updateValue]);
 
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
@@ -76,11 +80,9 @@ const DraggableSlider = ({ label, value, setValue, min, max, step, currencySymbo
       </div>
       <div 
         ref={sliderRef}
-        className="relative h-2 bg-gray-200 rounded-full cursor-pointer"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        className="relative h-4 bg-gray-200 rounded-full cursor-pointer"
+        onMouseDown={handleStart}
+        onTouchStart={handleStart}
       >
         <div 
           className="absolute top-0 left-0 h-full bg-blue-500 rounded-full"
