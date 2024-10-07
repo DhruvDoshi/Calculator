@@ -52,8 +52,8 @@ const DraggableSlider = ({ label, value, setValue, min, max, step, currencySymbo
   const percentage = ((value - min) / (max - min)) * 100;
 
   return (
-    <div className="mb-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
+    <div className="mb-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1">
         <label className="text-sm font-medium text-gray-600 mb-1 sm:mb-0">{label}</label>
         <div 
           className="bg-blue-50 px-3 py-1 rounded-full cursor-pointer transition duration-300 hover:bg-blue-100 w-full sm:w-auto text-center sm:text-left"
@@ -80,7 +80,7 @@ const DraggableSlider = ({ label, value, setValue, min, max, step, currencySymbo
       </div>
       <div 
         ref={sliderRef}
-        className="relative h-4 bg-gray-200 rounded-full cursor-pointer"
+        className="relative h-4 sm:h-2 bg-gray-200 rounded-full cursor-pointer"
         onMouseDown={handleStart}
         onTouchStart={handleStart}
       >
@@ -89,8 +89,8 @@ const DraggableSlider = ({ label, value, setValue, min, max, step, currencySymbo
           style={{ width: `${percentage}%` }}
         ></div>
         <div 
-          className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-blue-500 rounded-full shadow-md"
-          style={{ left: `calc(${percentage}% - 8px)` }}
+          className="absolute top-1/2 -translate-y-1/2 w-6 h-6 sm:w-4 sm:h-4 bg-white border-2 border-blue-500 rounded-full shadow-md"
+          style={{ left: `calc(${percentage}% - 12px)` }}
         ></div>
       </div>
     </div>
