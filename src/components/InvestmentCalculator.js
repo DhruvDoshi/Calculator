@@ -6,11 +6,11 @@ import DraggableSlider from './DraggableSlider';
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title);
 
 const currencies = [
-  { code: 'USD', symbol: '$', maxInvestment: 10000 },
-  { code: 'EUR', symbol: '€', maxInvestment: 10000 },
-  { code: 'GBP', symbol: '£', maxInvestment: 10000 },
-  { code: 'JPY', symbol: '¥', maxInvestment: 1000000 },
-  { code: 'INR', symbol: '₹', maxInvestment: 100000 },
+  { code: 'USD', symbol: '$', maxInvestment: 10000, maxWithdrawal: 15000 },
+  { code: 'EUR', symbol: '€', maxInvestment: 10000, maxWithdrawal: 15000 },
+  { code: 'GBP', symbol: '£', maxInvestment: 10000, maxWithdrawal: 15000 },
+  { code: 'JPY', symbol: '¥', maxInvestment: 1000000, maxWithdrawal: 1500000 },
+  { code: 'INR', symbol: '₹', maxInvestment: 100000, maxWithdrawal: 300000 },
 ];
 
 const InvestmentCalculator = () => {
@@ -37,6 +37,11 @@ const InvestmentCalculator = () => {
   const handleCurrencyChange = (event) => {
     const selectedCurrency = currencies.find(c => c.code === event.target.value);
     updateState('currency', selectedCurrency);
+    
+    // Adjust monthly withdrawal if it exceeds the new maximum
+    if (calculatorState.monthlyWithdrawal > selectedCurrency.maxWithdrawal) {
+      updateState('monthlyWithdrawal', selectedCurrency.maxWithdrawal);
+    }
   };
 
   const calculateResults = useCallback(() => {
@@ -134,7 +139,7 @@ const InvestmentCalculator = () => {
           value={monthlyWithdrawal}
           setValue={(value) => updateState('monthlyWithdrawal', value)}
           min={100}
-          max={10000}
+          max={currency.maxWithdrawal}
           step={100}
           currencySymbol={currency.symbol}
         />
