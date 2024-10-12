@@ -133,7 +133,7 @@ const InvestmentCalculator = () => {
           label="Monthly withdrawal amount"
           value={monthlyWithdrawal}
           setValue={(value) => updateState('monthlyWithdrawal', value)}
-          min={100}
+          min={0}
           max={10000}
           step={100}
           currencySymbol={currency.symbol}
