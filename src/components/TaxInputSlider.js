@@ -79,7 +79,7 @@ const DraggableSlider = ({ label, value, setValue, min, max, step, currencySymbo
           )}
         </div>
       </div>
-      <div className="relative px-[5%]">
+      <div className="relative px-[3%]">
         <div 
           ref={sliderRef}
           className="relative h-4 sm:h-2 bg-gray-200 rounded-full cursor-pointer"
