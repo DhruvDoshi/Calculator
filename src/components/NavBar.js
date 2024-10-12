@@ -27,7 +27,7 @@ const NavBar = () => {
         {/* Desktop menu */}
         <div className="hidden md:flex space-x-4 items-center">
           <Link to="/investmentcalculator" className="hover:text-gray-300">Investment Calculator</Link>
-          <Link to="/tax" className="hover:text-gray-300">Tax Calculator</Link>
+          <Link to="/taxcalculator" className="hover:text-gray-300">Tax Calculator</Link>
           <Link to="/retirement" className="hover:text-gray-300">Retirement</Link>
         </div>
       </div>
@@ -36,7 +36,7 @@ const NavBar = () => {
       {isMenuOpen && (
         <div className="md:hidden mt-4">
           <Link to="/investmentcalculator" className="block py-2 hover:text-gray-300">Investment Calculator</Link>
-          <Link to="/tax" className="block py-2 hover:text-gray-300">Tax Calculator</Link>
+          <Link to="/taxcalculator" className="block py-2 hover:text-gray-300">Tax Calculator</Link>
           <Link to="/retirement" className="block py-2 hover:text-gray-300">Retirement</Link>
         </div>
       )}
