@@ -1,0 +1,276 @@
+{
+    "federal": [
+      { "min": 0, "max": 11000, "rate": 0.10 },
+      { "min": 11000, "max": 44725, "rate": 0.12 },
+      { "min": 44725, "max": 95375, "rate": 0.22 },
+      { "min": 95375, "max": 182100, "rate": 0.24 },
+      { "min": 182100, "max": 231250, "rate": 0.32 },
+      { "min": 231250, "max": 578125, "rate": 0.35 },
+      { "min": 578125, "max": null, "rate": 0.37 }
+    ],
+    "state": {
+      "Alabama": [
+        { "min": 0, "max": 500, "rate": 0.02 },
+        { "min": 500, "max": 3000, "rate": 0.04 },
+        { "min": 3000, "max": null, "rate": 0.05 }
+      ],
+      "Alaska": [],
+      "Arizona": [
+        { "min": 0, "max": 27272, "rate": 0.0259 },
+        { "min": 27272, "max": 54544, "rate": 0.0334 },
+        { "min": 54544, "max": 163632, "rate": 0.0417 },
+        { "min": 163632, "max": null, "rate": 0.045 }
+      ],
+      "Arkansas": [
+        { "min": 0, "max": 4300, "rate": 0.02 },
+        { "min": 4300, "max": 8500, "rate": 0.04 },
+        { "min": 8500, "max": null, "rate": 0.055 }
+      ],
+      "California": [
+        { "min": 0, "max": 10099, "rate": 0.01 },
+        { "min": 10099, "max": 23942, "rate": 0.02 },
+        { "min": 23942, "max": 37788, "rate": 0.04 },
+        { "min": 37788, "max": 52455, "rate": 0.06 },
+        { "min": 52455, "max": 66295, "rate": 0.08 },
+        { "min": 66295, "max": 338639, "rate": 0.093 },
+        { "min": 338639, "max": 406364, "rate": 0.103 },
+        { "min": 406364, "max": 677275, "rate": 0.113 },
+        { "min": 677275, "max": null, "rate": 0.123 }
+      ],
+      "Colorado": [
+        { "min": 0, "max": null, "rate": 0.0455 }
+      ],
+      "Connecticut": [
+        { "min": 0, "max": 10000, "rate": 0.03 },
+        { "min": 10000, "max": 50000, "rate": 0.05 },
+        { "min": 50000, "max": 100000, "rate": 0.055 },
+        { "min": 100000, "max": 200000, "rate": 0.06 },
+        { "min": 200000, "max": 250000, "rate": 0.065 },
+        { "min": 250000, "max": 500000, "rate": 0.069 },
+        { "min": 500000, "max": null, "rate": 0.0699 }
+      ],
+      "Delaware": [
+        { "min": 0, "max": 5000, "rate": 0.022 },
+        { "min": 5000, "max": 10000, "rate": 0.039 },
+        { "min": 10000, "max": 20000, "rate": 0.048 },
+        { "min": 20000, "max": 25000, "rate": 0.052 },
+        { "min": 25000, "max": 60000, "rate": 0.0555 },
+        { "min": 60000, "max": null, "rate": 0.066 }
+      ],
+      "Florida": [],
+      "Georgia": [
+        { "min": 0, "max": 750, "rate": 0.01 },
+        { "min": 750, "max": 2250, "rate": 0.02 },
+        { "min": 2250, "max": 3750, "rate": 0.03 },
+        { "min": 3750, "max": 5250, "rate": 0.04 },
+        { "min": 5250, "max": 7000, "rate": 0.05 },
+        { "min": 7000, "max": null, "rate": 0.0575 }
+      ],
+      "Hawaii": [
+        { "min": 0, "max": 2400, "rate": 0.014 },
+        { "min": 2400, "max": 4800, "rate": 0.032 },
+        { "min": 4800, "max": 9600, "rate": 0.055 },
+        { "min": 9600, "max": 14400, "rate": 0.064 },
+        { "min": 14400, "max": 19200, "rate": 0.068 },
+        { "min": 19200, "max": 24000, "rate": 0.072 },
+        { "min": 24000, "max": 36000, "rate": 0.076 },
+        { "min": 36000, "max": 48000, "rate": 0.079 },
+        { "min": 48000, "max": 150000, "rate": 0.0825 },
+        { "min": 150000, "max": 175000, "rate": 0.09 },
+        { "min": 175000, "max": 200000, "rate": 0.10 },
+        { "min": 200000, "max": null, "rate": 0.11 }
+      ],
+      "Idaho": [
+        { "min": 0, "max": null, "rate": 0.058 }
+      ],
+      "Illinois": [
+        { "min": 0, "max": null, "rate": 0.0495 }
+      ],
+      "Indiana": [
+        { "min": 0, "max": null, "rate": 0.0323 }
+      ],
+      "Iowa": [
+        { "min": 0, "max": null, "rate": 0.0575 }
+      ],
+      "Kansas": [
+        { "min": 0, "max": 15000, "rate": 0.031 },
+        { "min": 15000, "max": 30000, "rate": 0.0525 },
+        { "min": 30000, "max": null, "rate": 0.057 }
+      ],
+      "Kentucky": [
+        { "min": 0, "max": null, "rate": 0.045 }
+      ],
+      "Louisiana": [
+        { "min": 0, "max": 12500, "rate": 0.0185 },
+        { "min": 12500, "max": 50000, "rate": 0.035 },
+        { "min": 50000, "max": null, "rate": 0.0425 }
+      ],
+      "Maine": [
+        { "min": 0, "max": 24500, "rate": 0.058 },
+        { "min": 24500, "max": 58050, "rate": 0.0675 },
+        { "min": 58050, "max": null, "rate": 0.0715 }
+      ],
+      "Maryland": [
+        { "min": 0, "max": 1000, "rate": 0.02 },
+        { "min": 1000, "max": 2000, "rate": 0.03 },
+        { "min": 2000, "max": 3000, "rate": 0.04 },
+        { "min": 3000, "max": 100000, "rate": 0.0475 },
+        { "min": 100000, "max": 125000, "rate": 0.05 },
+        { "min": 125000, "max": 150000, "rate": 0.0525 },
+        { "min": 150000, "max": 250000, "rate": 0.055 },
+        { "min": 250000, "max": null, "rate": 0.0575 }
+      ],
+      "Massachusetts": [
+        { "min": 0, "max": null, "rate": 0.05 }
+      ],
+      "Michigan": [
+        { "min": 0, "max": null, "rate": 0.0425 }
+      ],
+      "Minnesota": [
+        { "min": 0, "max": 28080, "rate": 0.0535 },
+        { "min": 28080, "max": 92230, "rate": 0.068 },
+        { "min": 92230, "max": 171220, "rate": 0.0785 },
+        { "min": 171220, "max": null, "rate": 0.0985 }
+      ],
+      "Mississippi": [
+        { "min": 0, "max": 10000, "rate": 0.04 },
+        { "min": 10000, "max": null, "rate": 0.05 }
+      ],
+      "Missouri": [
+        { "min": 0, "max": 1121, "rate": 0.015 },
+        { "min": 1121, "max": 2242, "rate": 0.02 },
+        { "min": 2242, "max": 3363, "rate": 0.025 },
+        { "min": 3363, "max": 4484, "rate": 0.03 },
+        { "min": 4484, "max": 5605, "rate": 0.035 },
+        { "min": 5605, "max": 6726, "rate": 0.04 },
+        { "min": 6726, "max": 7847, "rate": 0.045 },
+        { "min": 7847, "max": 8968, "rate": 0.05 },
+        { "min": 8968, "max": null, "rate": 0.054 }
+      ],
+      "Montana": [
+        { "min": 0, "max": 3300, "rate": 0.01 },
+        { "min": 3300, "max": 5800, "rate": 0.02 },
+        { "min": 5800, "max": 8900, "rate": 0.03 },
+        { "min": 8900, "max": 12000, "rate": 0.04 },
+        { "min": 12000, "max": 15400, "rate": 0.05 },
+        { "min": 15400, "max": 19800, "rate": 0.06 },
+        { "min": 19800, "max": null, "rate": 0.0675 }
+      ],
+      "Nebraska": [
+        { "min": 0, "max": 3700, "rate": 0.0246 },
+        { "min": 3700, "max": 22170, "rate": 0.0351 },
+        { "min": 22170, "max": 35730, "rate": 0.0501 },
+        { "min": 35730, "max": null, "rate": 0.0664 }
+      ],
+      "Nevada": [],
+      "New Hampshire": [],
+      "New Jersey": [
+        { "min": 0, "max": 20000, "rate": 0.014 },
+        { "min": 20000, "max": 35000, "rate": 0.0175 },
+        { "min": 35000, "max": 40000, "rate": 0.035 },
+        { "min": 40000, "max": 75000, "rate": 0.05525 },
+        { "min": 75000, "max": 500000, "rate": 0.0637 },
+        { "min": 500000, "max": 1000000, "rate": 0.0897 },
+        { "min": 1000000, "max": null, "rate": 0.1075 }
+      ],
+      "New Mexico": [
+        { "min": 0, "max": 5500, "rate": 0.017 },
+        { "min": 5500, "max": 11000, "rate": 0.032 },
+        { "min": 11000, "max": 16000, "rate": 0.047 },
+        { "min": 16000, "max": 210000, "rate": 0.049 },
+        { "min": 210000, "max": null, "rate": 0.059 }
+      ],
+      "New York": [
+        { "min": 0, "max": 8500, "rate": 0.04 },
+        { "min": 8500, "max": 11700, "rate": 0.045 },
+        { "min": 11700, "max": 13900, "rate": 0.0525 },
+        { "min": 13900, "max": 21400, "rate": 0.059 },
+        { "min": 21400, "max": 80650, "rate": 0.0597 },
+        { "min": 80650, "max": 215400, "rate": 0.0633 },
+        { "min": 215400, "max": 1077550, "rate": 0.0685 },
+        { "min": 1077550, "max": 5000000, "rate": 0.0965 },
+        { "min": 5000000, "max": 25000000, "rate": 0.103 },
+        { "min": 25000000, "max": null, "rate": 0.109 }
+      ],
+      "North Carolina": [
+        { "min": 0, "max": null, "rate": 0.0499 }
+      ],
+      "North Dakota": [
+        { "min": 0, "max": 41775, "rate": 0.011 },
+        { "min": 41775, "max": 101050, "rate": 0.0204 },
+        { "min": 101050, "max": 210825, "rate": 0.0227 },
+        { "min": 210825, "max": 458350, "rate": 0.0264 },
+        { "min": 458350, "max": null, "rate": 0.029 }
+      ],
+      "Ohio": [
+        { "min": 0, "max": 26050, "rate": 0.0285 },
+        { "min": 26050, "max": 46100, "rate": 0.0333 },
+        { "min": 46100, "max": 92150, "rate": 0.038 },
+        { "min": 92150, "max": 115300, "rate": 0.0441 },
+        { "min": 115300, "max": null, "rate": 0.048 }
+      ],
+      "Oklahoma": [
+        { "min": 0, "max": 1000, "rate": 0.005 },
+        { "min": 1000, "max": 2500, "rate": 0.01 },
+        { "min": 2500, "max": 3750, "rate": 0.02 },
+        { "min": 3750, "max": 4900, "rate": 0.03 },
+        { "min": 4900, "max": 7200, "rate": 0.04 },
+        { "min": 7200, "max": null, "rate": 0.045 }
+      ],
+      "Oregon": [
+        { "min": 0, "max": 3750, "rate": 0.0475 },
+        { "min": 3750, "max": 9450, "rate": 0.0675 },
+        { "min": 9450, "max": 125000, "rate": 0.0875 },
+        { "min": 125000, "max": null, "rate": 0.099 }
+      ],
+      "Pennsylvania": [
+        { "min": 0, "max": null, "rate": 0.0307 }
+      ],
+      "Rhode Island": [
+        { "min": 0, "max": 68200, "rate": 0.0375 },
+        { "min": 68200, "max": 155050, "rate": 0.0475 },
+        { "min": 155050, "max": null, "rate": 0.0599 }
+      ],
+      "South Carolina": [
+        { "min": 0, "max": 3200, "rate": 0 },
+        { "min": 3200, "max": 6410, "rate": 0.03 },
+        { "min": 6410, "max": 9620, "rate": 0.04 },
+        { "min": 9620, "max": 12820, "rate": 0.05 },
+        { "min": 12820, "max": 16040, "rate": 0.06 },
+        { "min": 16040, "max": null, "rate": 0.07 }
+      ],
+      "South Dakota": [],
+      "Tennessee": [],
+      "Texas": [],
+      "Utah": [
+        { "min": 0, "max": null, "rate": 0.0485 }
+      ],
+      "Vermont": [
+        { "min": 0, "max": 42150, "rate": 0.0335 },
+        { "min": 42150, "max": 102200, "rate": 0.066 },
+        { "min": 102200, "max": 213150, "rate": 0.076 },
+        { "min": 213150, "max": null, "rate": 0.0875 }
+      ],
+      "Virginia": [
+        { "min": 0, "max": 3000, "rate": 0.02 },
+        { "min": 3000, "max": 5000, "rate": 0.03 },
+        { "min": 5000, "max": 17000, "rate": 0.05 },
+        { "min": 17000, "max": null, "rate": 0.0575 }
+      ],
+      "Washington": [],
+      "West Virginia": [
+        { "min": 0, "max": 10000, "rate": 0.03 },
+        { "min": 10000, "max": 25000, "rate": 0.04 },
+        { "min": 25000, "max": 40000, "rate": 0.045 },
+        { "min": 40000, "max": 60000, "rate": 0.06 },
+        { "min": 60000, "max": null, "rate": 0.065 }
+      ],
+      "Wisconsin": [
+        { "min": 0, "max": 12760, "rate": 0.0354 },
+        { "min": 12760, "max": 25520, "rate": 0.0465 },
+        { "min": 25520, "max": 280950, "rate": 0.0627 },
+        { "min": 280950, "max": null, "rate": 0.0765 }
+      ],
+      "Wyoming": []
+    }
+  }
