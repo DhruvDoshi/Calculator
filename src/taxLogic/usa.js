@@ -9,13 +9,14 @@ export const calculateUSATax = (income, state, taxData) => {
 
   const totalTax = federalTax + stateTax;
   const netIncome = income - totalTax;
+  const effectiveTaxRate = (totalTax / income) * 100;
 
   return {
     federalTax: federalTax.toFixed(2),
     stateTax: stateTax.toFixed(2),
     totalTax: totalTax.toFixed(2),
     netIncome: netIncome.toFixed(2),
-    effectiveTaxRate: ((totalTax / income) * 100).toFixed(2)
+    effectiveTaxRate: effectiveTaxRate.toFixed(2)
   };
 };
 
@@ -33,3 +34,13 @@ const calculateTaxForBrackets = (income, brackets) => {
 
   return tax;
 };
+
+export const getUSASpecificFields = () => [
+  // USA doesn't have additional fields in this example, but you can add them here if needed
+];
+
+export const getUSAIncomeRange = () => ({
+  min: 0,
+  max: 1000000,
+  step: 1000
+});

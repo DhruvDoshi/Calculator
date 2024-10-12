@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DraggableSlider from './DraggableSlider';
+import IndiaTaxSavings from './IndiaTaxSavings';
 import countries from '../data/countries.json';
 import regions from '../data/regions.json';
-import { getTaxCalculator } from '../taxLogic';
+import { getTaxCalculator, getCountrySpecificFields, getIncomeRange } from '../taxLogic';
 
 const TaxCalculator = () => {
-  const [country, setCountry] = useState('Canada');
+  const [country, setCountry] = useState('India');
   const [region, setRegion] = useState('');
-  const [income, setIncome] = useState(167000);
+  const [income, setIncome] = useState(500000);
   const [taxResult, setTaxResult] = useState(null);
   const [taxData, setTaxData] = useState(null);
+  const [countrySpecificData, setCountrySpecificData] = useState({});
 
   useEffect(() => {
     const loadTaxData = async () => {
@@ -17,7 +19,8 @@ const TaxCalculator = () => {
         try {
           const module = await import(`../data/taxBrackets/${country.toLowerCase().replace(' ', '')}.json`);
           setTaxData(module.default);
-          setRegion('');
+          setRegion(''); // Reset region when country changes
+          setCountrySpecificData({});
         } catch (error) {
           console.error(`Failed to load data for ${country}`, error);
           setTaxData(null);
@@ -36,31 +39,19 @@ const TaxCalculator = () => {
 
     const taxCalculator = getTaxCalculator(country);
     if (taxCalculator) {
-      const result = taxCalculator(income, region, taxData);
+      const result = taxCalculator(income, region, taxData, countrySpecificData);
       setTaxResult(result);
     } else {
       setTaxResult(null);
     }
-  }, [country, region, income, taxData]);
+  }, [country, region, income, taxData, countrySpecificData]);
 
   useEffect(() => {
     calculateTax();
   }, [calculateTax]);
 
-  const getIncomeRange = useCallback(() => {
-    if (country === 'India') {
-      return { min: 0, max: 10000000, step: 10000 };
-    }
-    return { min: 0, max: 500000, step: 1000 };
-  }, [country]);
-
-  const incomeRange = getIncomeRange();
-
-  useEffect(() => {
-    if (country === 'India' && income > incomeRange.max) {
-      setIncome(incomeRange.max);
-    }
-  }, [country, income, incomeRange.max]);
+  const incomeRange = getIncomeRange(country);
+  const countrySpecificFields = getCountrySpecificFields(country);
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -105,35 +96,44 @@ const TaxCalculator = () => {
           max={incomeRange.max}
           step={incomeRange.step}
           currencySymbol={country === 'India' ? '₹' : '$'}
+          currentYear={new Date().getFullYear()}
+          showYear={false}
         />
+
+        {countrySpecificFields.map(field => (
+          <DraggableSlider
+            key={field.name}
+            label={field.label}
+            value={countrySpecificData[field.name] || 0}
+            setValue={(value) => setCountrySpecificData(prev => ({ ...prev, [field.name]: value }))}
+            min={field.min}
+            max={field.max}
+            step={field.step}
+            currencySymbol={country === 'India' ? '₹' : '$'}
+            currentYear={new Date().getFullYear()}
+            showYear={false}
+          />
+        ))}
 
         {taxResult && (
           <div className="mt-6 grid grid-cols-2 gap-4">
             <div>
               <h2 className="text-lg font-semibold">Deductions</h2>
-              <p>Federal Tax: {country === 'India' ? '₹' : '$'}{taxResult.federalTax}</p>
-              {country === 'Canada' && (
-                <>
-                  <p>Provincial Tax: ${taxResult.provincialTax}</p>
-                  <p>CPP: ${taxResult.cpp}</p>
-                  <p>EI: ${taxResult.ei}</p>
-                </>
-              )}
-              {country === 'United States' && (
-                <p>State Tax: ${taxResult.stateTax}</p>
-              )}
-              {country === 'India' && (
-                <p>Cess: ₹{taxResult.cess}</p>
-              )}
+              {Object.entries(taxResult)
+                .filter(([key]) => !['netIncome', 'effectiveTaxRate'].includes(key))
+                .map(([key, value]) => (
+                  <p key={key}>{key}: {country === 'India' ? '₹' : '$'}{value}</p>
+                ))}
             </div>
             <div>
               <h2 className="text-lg font-semibold">Results</h2>
-              <p>Total Tax: ${taxResult.totalTax}</p>
-              <p>Net Income: ${taxResult.netIncome}</p>
+              <p>Net Income: {country === 'India' ? '₹' : '$'}{taxResult.netIncome}</p>
               <p>Effective Tax Rate: {taxResult.effectiveTaxRate}%</p>
             </div>
           </div>
         )}
+
+        {country === 'India' && <IndiaTaxSavings income={income} />}
       </div>
     </div>
   );

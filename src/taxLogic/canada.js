@@ -30,23 +30,26 @@ export const calculateCanadianTax = (income, province, taxData) => {
 };
 
 const calculateTaxForBrackets = (income, brackets) => {
-  if (!Array.isArray(brackets)) {
-    console.error('Invalid tax brackets:', brackets);
-    return 0;
-  }
-
   let tax = 0;
   let remainingIncome = income;
 
   for (const bracket of brackets) {
-    if (remainingIncome > 0) {
-      const taxableAmount = Math.min(remainingIncome, (bracket.max || Infinity) - bracket.min);
-      tax += taxableAmount * bracket.rate;
-      remainingIncome -= taxableAmount;
-    } else {
-      break;
-    }
+    if (remainingIncome <= 0) break;
+    
+    const taxableAmount = Math.min(remainingIncome, (bracket.max || Infinity) - bracket.min);
+    tax += taxableAmount * bracket.rate;
+    remainingIncome -= taxableAmount;
   }
 
   return tax;
 };
+
+export const getCanadaSpecificFields = () => [
+  // Canada doesn't have additional fields in this example, but you can add them here if needed
+];
+
+export const getCanadaIncomeRange = () => ({
+  min: 0,
+  max: 500000,
+  step: 1000
+});
