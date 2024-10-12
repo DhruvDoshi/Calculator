@@ -19,16 +19,16 @@ const HomePage = () => {
         <CalculatorCard
           title="SIP Calculator"
           description="Calculate your Systematic Investment Plan returns"
-          link="/investment"
+          link="/investment?type=sip"
         />
         <CalculatorCard
           title="Lumpsum Calculator"
-          description="Coming soon..."
-          link="/lumpsum"
+          description="Calculate your Lumpsum Investment returns"
+          link="/investment?type=lumpsum"
         />
         <CalculatorCard
           title="Tax Calculator"
-          description="Coming soon..."
+          description="Calculate your income tax"
           link="/tax"
         />
         <CalculatorCard

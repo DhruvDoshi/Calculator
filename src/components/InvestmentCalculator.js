@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Doughnut, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title } from 'chart.js';
 import DraggableSlider from './TaxInputSlider';
+import { useLocation } from 'react-router-dom';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title);
 
@@ -14,6 +15,17 @@ const currencies = [
 ];
 
 const InvestmentCalculator = () => {
+  const [calculatorType, setCalculatorType] = useState('sip');
+  const location = useLocation();
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const type = searchParams.get('type');
+    if (type === 'sip' || type === 'lumpsum') {
+      setCalculatorType(type);
+    }
+  }, [location]);
+
   const [calculatorState, setCalculatorState] = useState({
     isSIP: true,
     monthlyInvestment: 2800,
@@ -321,17 +333,17 @@ const InvestmentCalculator = () => {
           <div className="flex space-x-2">
             <button
               className={`px-4 py-2 text-sm font-semibold rounded-md ${
-                isSIP ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
+                calculatorType === 'sip' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
               }`}
-              onClick={() => updateState('isSIP', true)}
+              onClick={() => setCalculatorType('sip')}
             >
               SIP
             </button>
             <button
               className={`px-4 py-2 text-sm font-semibold rounded-md ${
-                !isSIP ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
+                calculatorType === 'lumpsum' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
               }`}
-              onClick={() => updateState('isSIP', false)}
+              onClick={() => setCalculatorType('lumpsum')}
             >
               Lumpsum
             </button>
