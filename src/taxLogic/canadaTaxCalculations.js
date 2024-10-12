@@ -1,4 +1,4 @@
-export const calculateCanadianTax = (income, province, taxData) => {
+export const calculateCanadianTax = (income, province, taxData, countrySpecificData) => {
   if (!taxData || !taxData.federal || !taxData.provincial || !taxData.provincial[province]) {
     console.error('Invalid tax data for Canada');
     return null;

@@ -1,6 +1,6 @@
-import { calculateCanadianTax, getCanadaSpecificFields, getCanadaIncomeRange } from './canada';
-import { calculateUSATax, getUSASpecificFields, getUSAIncomeRange } from './usa';
-import { calculateIndiaTax, getIndiaSpecificFields, getIndiaIncomeRange } from './india';
+import { calculateCanadianTax, getCanadaSpecificFields, getCanadaIncomeRange } from './canadaTaxCalculations';
+import { calculateUSATax, getUSASpecificFields, getUSAIncomeRange } from './usaTaxCalculations';
+import { calculateIndiaTax, getIndiaSpecificFields, getIndiaIncomeRange } from './indiaTaxCalculations';
 
 export const getTaxCalculator = (country) => {
   switch (country) {

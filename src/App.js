@@ -1,9 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import NavBar from './components/NavBar';
-import Home from './components/Home';
+import HomePage from './components/HomePage';
 import InvestmentCalculator from './components/InvestmentCalculator';
-import TaxCalculator from './components/TaxCalculator';
+import TaxCalculatorApp from './components/TaxCalculatorApp';
 
 function App() {
   return (
@@ -11,10 +11,9 @@ function App() {
       <div className="App">
         <NavBar />
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/investmentcalculator" element={<InvestmentCalculator />} />
-          <Route path="/taxcalculator" element={<TaxCalculator />} />
-          {/* Add routes for Tax and Retirement calculators when they're ready */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/investment" element={<InvestmentCalculator />} />
+          <Route path="/tax" element={<TaxCalculatorApp />} />
         </Routes>
       </div>
     </Router>
