@@ -47,6 +47,21 @@ const TaxCalculator = () => {
     calculateTax();
   }, [calculateTax]);
 
+  const getIncomeRange = useCallback(() => {
+    if (country === 'India') {
+      return { min: 0, max: 10000000, step: 10000 };
+    }
+    return { min: 0, max: 500000, step: 1000 };
+  }, [country]);
+
+  const incomeRange = getIncomeRange();
+
+  useEffect(() => {
+    if (country === 'India' && income > incomeRange.max) {
+      setIncome(incomeRange.max);
+    }
+  }, [country, income, incomeRange.max]);
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Income Tax Calculator (2024)</h1>
@@ -86,25 +101,29 @@ const TaxCalculator = () => {
           label="Annual Income"
           value={income}
           setValue={setIncome}
-          min={0}
-          max={500000}
-          step={1000}
-          currencySymbol="$"
+          min={incomeRange.min}
+          max={incomeRange.max}
+          step={incomeRange.step}
+          currencySymbol={country === 'India' ? '₹' : '$'}
         />
 
         {taxResult && (
           <div className="mt-6 grid grid-cols-2 gap-4">
             <div>
               <h2 className="text-lg font-semibold">Deductions</h2>
-              <p>Federal Tax: ${taxResult.federalTax}</p>
-              {country === 'Canada' ? (
+              <p>Federal Tax: {country === 'India' ? '₹' : '$'}{taxResult.federalTax}</p>
+              {country === 'Canada' && (
                 <>
                   <p>Provincial Tax: ${taxResult.provincialTax}</p>
                   <p>CPP: ${taxResult.cpp}</p>
                   <p>EI: ${taxResult.ei}</p>
                 </>
-              ) : (
+              )}
+              {country === 'United States' && (
                 <p>State Tax: ${taxResult.stateTax}</p>
+              )}
+              {country === 'India' && (
+                <p>Cess: ₹{taxResult.cess}</p>
               )}
             </div>
             <div>
