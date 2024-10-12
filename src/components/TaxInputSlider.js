@@ -1,32 +1,37 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 
 const DraggableSlider = ({ label, value, setValue, min, max, step, currencySymbol, currentYear, showYear }) => {
-  const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(value);
   const sliderRef = useRef(null);
 
-  const updateValue = (clientX) => {
+  const updateValue = useCallback((clientX) => {
     const rect = sliderRef.current.getBoundingClientRect();
-    const percentage = (clientX - rect.left) / rect.width;
+    const padding = rect.width * 0.05; // 5% padding on each side
+    const percentage = Math.max(0, Math.min(1, (clientX - rect.left - padding) / (rect.width - 2 * padding)));
     const newValue = Math.round((percentage * (max - min) + min) / step) * step;
     setValue(Math.min(max, Math.max(min, newValue)));
-  };
+  }, [min, max, step, setValue]);
 
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    updateValue(e.clientX);
-  };
-
-  const handleMouseMove = (e) => {
-    if (isDragging) {
-      updateValue(e.clientX);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+  const handleStart = useCallback((e) => {
+    e.preventDefault();
+    const handleMove = (moveEvent) => {
+      moveEvent.preventDefault();
+      const clientX = moveEvent.type.includes('mouse') ? moveEvent.clientX : moveEvent.touches[0].clientX;
+      updateValue(clientX);
+    };
+    const handleEnd = () => {
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchend', handleEnd);
+    };
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('touchmove', handleMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchend', handleEnd);
+    updateValue(e.type.includes('mouse') ? e.clientX : e.touches[0].clientX);
+  }, [updateValue]);
 
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
@@ -48,8 +53,8 @@ const DraggableSlider = ({ label, value, setValue, min, max, step, currencySymbo
   const percentage = ((value - min) / (max - min)) * 100;
 
   return (
-    <div className="mb-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
+    <div className="mb-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1">
         <label className="text-sm font-medium text-gray-600 mb-1 sm:mb-0">{label}</label>
         <div 
           className="bg-blue-50 px-3 py-1 rounded-full cursor-pointer transition duration-300 hover:bg-blue-100 w-full sm:w-auto text-center sm:text-left"
@@ -74,22 +79,22 @@ const DraggableSlider = ({ label, value, setValue, min, max, step, currencySymbo
           )}
         </div>
       </div>
-      <div 
-        ref={sliderRef}
-        className="relative h-2 bg-gray-200 rounded-full cursor-pointer"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-      >
+      <div className="relative px-[3%]">
         <div 
-          className="absolute top-0 left-0 h-full bg-blue-500 rounded-full"
-          style={{ width: `${percentage}%` }}
-        ></div>
-        <div 
-          className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-blue-500 rounded-full shadow-md"
-          style={{ left: `calc(${percentage}% - 8px)` }}
-        ></div>
+          ref={sliderRef}
+          className="relative h-4 sm:h-2 bg-gray-200 rounded-full cursor-pointer"
+          onMouseDown={handleStart}
+          onTouchStart={handleStart}
+        >
+          <div 
+            className="absolute top-0 left-0 h-full bg-blue-500 rounded-full"
+            style={{ width: `${percentage}%` }}
+          ></div>
+          <div 
+            className="absolute top-1/2 -translate-y-1/2 w-6 h-6 sm:w-4 sm:h-4 bg-white border-2 border-blue-500 rounded-full shadow-md"
+            style={{ left: `calc(${percentage}% - 12px)` }}
+          ></div>
+        </div>
       </div>
     </div>
   );
