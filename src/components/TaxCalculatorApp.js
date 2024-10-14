@@ -44,11 +44,11 @@ const TaxCalculatorApp = () => {
   return (
     <div className="max-w-10xl mx-auto p-2">
       <div className="bg-white p-4 rounded-lg shadow-md">
-        <div className="mb-6 flex flex-wrap gap-2">
+        <div className="mb-6 flex space-x-2">
           {countries.map(c => (
             <button
               key={c}
-              className={`px-4 py-2 rounded-md transition-colors ${
+              className={`flex-1 px-4 py-2 rounded-md transition-colors ${
                 country === c
                   ? 'bg-blue-500 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
