@@ -5,7 +5,7 @@ import { CanadaTaxCalculator } from './countries/CanadaTaxCalculator';
 import { USATaxCalculator } from './countries/USATaxCalculator';
 
 const TaxCalculatorApp = () => {
-  const [country, setCountry] = useState('India');
+  const [country, setCountry] = useState('');
   const [income, setIncome] = useState(500000);
   const [region, setRegion] = useState('');
   const [countrySpecificData, setCountrySpecificData] = useState({});
@@ -42,23 +42,25 @@ const TaxCalculatorApp = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Income Tax Calculator (2024)</h1>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-          <select
-            className="w-full p-2 border rounded"
-            value={country}
-            onChange={(e) => handleCountryChange(e.target.value)}
-          >
-            {countries.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+    <div className="max-w-10xl mx-auto p-2">
+      <div className="bg-white p-4 rounded-lg shadow-md">
+        <div className="mb-6 flex flex-wrap gap-2">
+          {countries.map(c => (
+            <button
+              key={c}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                country === c
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              onClick={() => handleCountryChange(c)}
+            >
+              {c}
+            </button>
+          ))}
         </div>
 
-        {renderCountryComponent()}
+        {country && renderCountryComponent()}
       </div>
     </div>
   );
