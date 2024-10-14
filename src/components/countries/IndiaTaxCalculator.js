@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import TaxInputSlider from '../TaxInputSlider';
 import taxBrackets from '../../data/taxRates/indiaTaxRates.json';
+import { Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 // Deduction limits
 const DEDUCTION_LIMITS = {
@@ -68,8 +72,8 @@ const TAX_SAVING_SUGGESTIONS = [
 
 export const IndiaTaxCalculator = () => {
   const [income, setIncome] = useState(500000);
-  const [ageBracket, setAgeBracket] = useState('');
-  const [taxRegime, setTaxRegime] = useState('');
+  const [ageBracket, setAgeBracket] = useState('below60');
+  const [taxRegime, setTaxRegime] = useState('old');
   const [deductions, setDeductions] = useState({
     section80C: 0,
     nps: 0,
@@ -78,13 +82,11 @@ export const IndiaTaxCalculator = () => {
   const [taxResult, setTaxResult] = useState(null);
 
   useEffect(() => {
-    if (income && ageBracket && taxRegime) {
-      const result = calculateTax(income, { 
-        ...deductions, 
-        standardDeduction: DEDUCTION_LIMITS.standardDeduction 
-      }, ageBracket, taxRegime);
-      setTaxResult(result);
-    }
+    const result = calculateTax(income, { 
+      ...deductions, 
+      standardDeduction: DEDUCTION_LIMITS.standardDeduction 
+    }, ageBracket, taxRegime);
+    setTaxResult(result);
   }, [income, deductions, ageBracket, taxRegime]);
 
   const handleDeductionChange = (name, value) => {
@@ -94,71 +96,75 @@ export const IndiaTaxCalculator = () => {
     }));
   };
 
-  const ButtonGroup = ({ label, options, selectedValue, onChange }) => (
-    <div className="flex-1">
-      <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
-      <div className="flex space-x-2">
-        {options.map((option) => (
-          <button
-            key={option.value}
-            className={`px-4 py-2 rounded-md text-sm ${
-              selectedValue === option.value
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-            onClick={() => onChange(option.value)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+  const chartData = {
+    labels: ['Tax', 'Net Income'],
+    datasets: [
+      {
+        data: taxResult ? [taxResult.tax, taxResult.netIncome] : [0, 100],
+        backgroundColor: ['#FF6384', '#36A2EB'],
+        hoverBackgroundColor: ['#FF6384', '#36A2EB']
+      }
+    ]
+  };
 
   return (
-    <div className="p-4 space-y-6">
-      {/* Income Input */}
-      <div className="flex flex-col">
-        <TaxInputSlider
-          label="Annual Income"
-          value={income}
-          setValue={setIncome}
-          min={0}
-          max={10000000}
-          step={10000}
-          currencySymbol="₹"
-        />
-      </div>
+    <div className="flex flex-col lg:flex-row h-screen bg-gray-100 p-4 space-y-4 lg:space-y-0 lg:space-x-4">
+      <div className="lg:w-2/3 space-y-4">
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">Income Details</h2>
+          <TaxInputSlider
+            label="Annual Income"
+            value={income}
+            setValue={setIncome}
+            min={0}
+            max={10000000}
+            step={10000}
+            currencySymbol="₹"
+          />
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Age Bracket</label>
+            <div className="flex space-x-2">
+              {['Below 60', '60 to 80', 'Above 80'].map((age) => (
+                <button
+                  key={age}
+                  className={`flex-1 px-4 py-2 rounded-md text-sm ${
+                    ageBracket === age.toLowerCase().replace(' ', '')
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                  onClick={() => setAgeBracket(age.toLowerCase().replace(' ', ''))}
+                >
+                  {age}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tax Regime</label>
+            <div className="flex space-x-2">
+              {['Old Regime', 'New Regime'].map((regime) => (
+                <button
+                  key={regime}
+                  className={`flex-1 px-4 py-2 rounded-md ${
+                    taxRegime === regime.toLowerCase().replace(' ', '')
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                  onClick={() => setTaxRegime(regime.toLowerCase().replace(' ', ''))}
+                >
+                  {regime}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
-      {/* Age Bracket and Tax Regime Selection */}
-      <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
-        <ButtonGroup
-          label="Age Bracket"
-          options={[
-            { value: 'below60', label: 'Below 60' },
-            { value: '60to80', label: '60 to 80' },
-            { value: 'above80', label: 'Above 80' },
-          ]}
-          selectedValue={ageBracket}
-          onChange={setAgeBracket}
-        />
-        <ButtonGroup
-          label="Tax Regime"
-          options={[
-            { value: 'old', label: 'Old Regime' },
-            { value: 'new', label: 'New Regime' },
-          ]}
-          selectedValue={taxRegime}
-          onChange={setTaxRegime}
-        />
-      </div>
-
-      {/* Deductions (only show if Old Regime is selected) */}
-      {taxRegime === 'old' && (
-        <div className="flex flex-col md:flex-row md:space-x-4">
-          {Object.entries(deductions).map(([name, value]) => (
-            <div key={name} className="flex-1 mb-4 md:mb-0">
+        {taxRegime === 'old' && (
+          <div className="bg-white p-4 rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-4">Deductions</h2>
+            {Object.entries(deductions).map(([name, value]) => (
               <TaxInputSlider
+                key={name}
                 label={name.charAt(0).toUpperCase() + name.slice(1)}
                 value={value}
                 setValue={(newValue) => handleDeductionChange(name, newValue)}
@@ -167,44 +173,63 @@ export const IndiaTaxCalculator = () => {
                 step={1000}
                 currencySymbol="₹"
               />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Tax Calculation Results */}
-      {taxResult && (
-        <div className="flex flex-col bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Tax Calculation Results</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <p>Taxable Income: <span className="font-medium">₹{taxResult.taxableIncome.toLocaleString()}</span></p>
-            <p>Tax Amount: <span className="font-medium">₹{taxResult.tax.toLocaleString()}</span></p>
-            <p>Net Income: <span className="font-medium">₹{taxResult.netIncome.toLocaleString()}</span></p>
-            <p>Effective Tax Rate: <span className="font-medium">{taxResult.effectiveTaxRate.toFixed(2)}%</span></p>
-          </div>
-        </div>
-      )}
-
-      {/* Tax Saving Suggestions (only show if Old Regime is selected) */}
-      {taxRegime === 'old' && (
-        <div className="flex flex-col">
-          <h2 className="text-xl font-semibold mb-3">Tax Saving Suggestions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {TAX_SAVING_SUGGESTIONS.filter(s => s.applicable(income)).map((suggestion, index) => (
-              <div key={index} className="bg-blue-50 p-3 rounded">
-                <h3 className="font-medium">{suggestion.name}</h3>
-                <p className="text-sm text-gray-600">{suggestion.description}</p>
-                <p className="text-sm text-gray-600">
-                  Limit: {typeof suggestion.limit === 'number' ? `₹${suggestion.limit.toLocaleString()}` : suggestion.limit}
-                </p>
-              </div>
             ))}
           </div>
-          <p className="mt-3 text-sm text-gray-500">
-            Note: These are general suggestions. Please consult a tax professional for personalized advice.
-          </p>
-        </div>
-      )}
+        )}
+
+        {taxResult && (
+          <div className="bg-white p-4 rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-4">Tax Calculation Results</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-600">Taxable Income</p>
+                <p className="text-lg font-medium">₹{taxResult.taxableIncome.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Tax Amount</p>
+                <p className="text-lg font-medium">₹{taxResult.tax.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Net Income</p>
+                <p className="text-lg font-medium">₹{taxResult.netIncome.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Effective Tax Rate</p>
+                <p className="text-lg font-medium">{taxResult.effectiveTaxRate.toFixed(2)}%</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="lg:w-1/3 space-y-4">
+        {taxResult && (
+          <div className="bg-white p-4 rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-4">Tax Breakdown</h2>
+            <Doughnut data={chartData} />
+          </div>
+        )}
+
+        {taxRegime === 'old' && (
+          <div className="bg-white p-4 rounded-lg shadow overflow-y-auto" style={{maxHeight: "calc(100vh - 450px)"}}>
+            <h2 className="text-xl font-semibold mb-4">Tax Saving Suggestions</h2>
+            <div className="space-y-4">
+              {TAX_SAVING_SUGGESTIONS.filter(s => s.applicable(income)).map((suggestion, index) => (
+                <div key={index} className="bg-blue-50 p-3 rounded">
+                  <h3 className="font-medium">{suggestion.name}</h3>
+                  <p className="text-sm text-gray-600">{suggestion.description}</p>
+                  <p className="text-sm text-gray-600">
+                    Limit: {typeof suggestion.limit === 'number' ? `₹${suggestion.limit.toLocaleString()}` : suggestion.limit}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-sm text-gray-500">
+              Note: These are general suggestions. Please consult a tax professional for personalized advice.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
