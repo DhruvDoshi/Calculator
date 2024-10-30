@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import DraggableSlider from '../TaxInputSlider';
+import html2canvas from 'html2canvas';
+import { saveAs } from 'file-saver';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -220,8 +222,97 @@ export const IndiaTaxCalculator = () => {
     return suggestions;
   };
 
+  const downloadPDF = async () => {
+    try {
+      const element = document.querySelector('.tax-calculator-container');
+      if (!element) {
+        console.error('Calculator container not found');
+        return;
+      }
+      
+      const canvas = await html2canvas(element, {
+        scale: 2, // Better quality
+        logging: false,
+        useCORS: true,
+        allowTaint: true
+      });
+      
+      const dataUrl = canvas.toDataURL('image/png');
+      saveAs(dataUrl, 'tax-calculation.png');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    }
+  };
+
+  const saveCalculation = async () => {
+    try {
+      const element = document.querySelector('.tax-calculator-container');
+      if (!element) return;
+      
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        allowTaint: true
+      });
+      const dataUrl = canvas.toDataURL('image/png');
+      saveAs(dataUrl, 'saved-calculation.png');
+    } catch (error) {
+      console.error('Error saving calculation:', error);
+    }
+  };
+
+  const shareResults = async () => {
+    try {
+      const element = document.querySelector('.tax-calculator-container');
+      if (!element) return;
+      
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        allowTaint: true
+      });
+      const dataUrl = canvas.toDataURL('image/png');
+      
+      if (navigator.share) {
+        const blob = await (await fetch(dataUrl)).blob();
+        const file = new File([blob], 'tax-calculation.png', { type: 'image/png' });
+        try {
+          await navigator.share({
+            title: 'My Tax Calculation',
+            text: 'Check out my tax calculation from Finance Calculator',
+            files: [file]
+          });
+        } catch (error) {
+          console.log('Error sharing:', error);
+        }
+      } else {
+        // Fallback for browsers that don't support native sharing
+        const shareWindow = window.open('', '_blank');
+        if (shareWindow) {
+          shareWindow.document.write(`
+            <html>
+              <body>
+                <h2>Share on:</h2>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                  <a href="https://twitter.com/intent/tweet?text=My Tax Calculation&url=${encodeURIComponent(dataUrl)}" target="_blank">Twitter</a>
+                  <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(dataUrl)}" target="_blank">Facebook</a>
+                  <a href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(dataUrl)}" target="_blank">LinkedIn</a>
+                  <a href="https://api.whatsapp.com/send?text=My Tax Calculation ${encodeURIComponent(dataUrl)}" target="_blank">WhatsApp</a>
+                </div>
+              </body>
+            </html>
+          `);
+        }
+      }
+    } catch (error) {
+      console.error('Error sharing results:', error);
+    }
+  };
+
   return (
-    <div className="flex flex-col lg:flex-row gap-3">
+    <div className="tax-calculator-container flex flex-col lg:flex-row gap-3">
       <div className="lg:w-2/3 space-y-3">
         <div className="bg-white p-3 rounded-lg shadow">
           <h2 className="text-xl font-bold mb-3">Income Details</h2>
@@ -429,16 +520,39 @@ export const IndiaTaxCalculator = () => {
         <div className="bg-white p-3 rounded-lg shadow mt-3">
           <h2 className="text-xl font-bold mb-2">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-2">
-            <button className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600">
+            <button 
+              onClick={downloadPDF}
+              className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600 flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
               Download PDF Report
             </button>
-            <button className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600">
+            <button 
+              onClick={saveCalculation}
+              className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600 flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              </svg>
               Save Calculation
             </button>
-            <button className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600">
+            <button 
+              onClick={shareResults}
+              className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600 flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
               Share Results
             </button>
-            <button className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600">
+            <button 
+              className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600 flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
               Compare Regimes
             </button>
           </div>
