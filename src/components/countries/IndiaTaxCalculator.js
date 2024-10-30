@@ -21,6 +21,13 @@ const TaxResultCard = ({ label, value }) => (
   </div>
 );
 
+const TaxSlabCard = ({ slab, rate, regime }) => (
+  <div className="flex justify-between items-center p-2 border-b border-blue-100 last:border-0">
+    <span className="text-sm text-gray-600">{slab}</span>
+    <span className="text-sm font-medium text-blue-600">{rate}</span>
+  </div>
+);
+
 export const IndiaTaxCalculator = () => {
   const [income, setIncome] = useState(500000);
   const [shortTermCapitalGains, setShortTermCapitalGains] = useState(0);
@@ -415,6 +422,38 @@ export const IndiaTaxCalculator = () => {
                 label="Effective Tax Rate" 
                 value={`${taxResult.effectiveTaxRate.toFixed(1)}%`} 
               />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-3 rounded-lg shadow mt-3">
+          <h2 className="text-xl font-bold mb-2">Quick Actions</h2>
+          <div className="grid grid-cols-2 gap-2">
+            <button className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600">
+              Download PDF Report
+            </button>
+            <button className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600">
+              Save Calculation
+            </button>
+            <button className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600">
+              Share Results
+            </button>
+            <button className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600">
+              Compare Regimes
+            </button>
+          </div>
+
+          <div className="mt-3">
+            <h3 className="text-sm font-semibold text-gray-600 mb-2">Important Dates</h3>
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center p-1.5 bg-blue-50 rounded-lg">
+                <div className="text-xs text-gray-800">Advance Tax (Q3)</div>
+                <div className="text-xs font-semibold text-blue-600">Dec 15, 2024</div>
+              </div>
+              <div className="flex justify-between items-center p-1.5 bg-red-50 rounded-lg">
+                <div className="text-xs text-gray-800">Tax Filing</div>
+                <div className="text-xs font-semibold text-red-600">Jul 31, 2024</div>
+              </div>
             </div>
           </div>
         </div>
