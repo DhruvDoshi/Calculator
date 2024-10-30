@@ -214,11 +214,11 @@ export const IndiaTaxCalculator = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4">
-      <div className="lg:w-2/3 space-y-4">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-2xl font-bold mb-4">Income Details</h2>
-          <div className="mb-4">
+    <div className="flex flex-col lg:flex-row gap-3">
+      <div className="lg:w-2/3 space-y-3">
+        <div className="bg-white p-3 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-3">Income Details</h2>
+          <div className="mb-3">
             <DraggableSlider
               label="Annual Income"
               value={income}
@@ -231,7 +231,7 @@ export const IndiaTaxCalculator = () => {
               showYear={false}
             />
           </div>
-          <div className="flex space-x-4 mb-4">
+          <div className="flex gap-3 mb-3">
             <div className="w-1/2">
               <DraggableSlider
                 label="Short-term Capital Gains"
@@ -259,9 +259,9 @@ export const IndiaTaxCalculator = () => {
               />
             </div>
           </div>
-          <div className="mt-6">
-            <h3 className="text-xl font-bold mb-4">Age Bracket</h3>
-            <div className="flex space-x-2">
+          <div className="mt-4">
+            <h3 className="text-lg font-bold mb-2">Age Bracket</h3>
+            <div className="flex gap-2">
               {['Below 60', '60 to 80', 'Above 80'].map((age) => (
                 <button
                   key={age}
@@ -277,9 +277,9 @@ export const IndiaTaxCalculator = () => {
               ))}
             </div>
           </div>
-          <div className="mt-6">
-            <h3 className="text-xl font-bold mb-4">Select Tax Regime</h3>
-            <div className="flex space-x-2">
+          <div className="mt-4">
+            <h3 className="text-lg font-bold mb-2">Select Tax Regime</h3>
+            <div className="flex gap-2">
               {['Old Regime', 'New Regime'].map((regime) => (
                 <button
                   key={regime}
@@ -295,43 +295,45 @@ export const IndiaTaxCalculator = () => {
               ))}
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <button 
-              className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700"
+              className="w-full py-1.5 px-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700"
               onClick={() => setShowDeductions(!showDeductions)}
             >
-              Show Deductions
+              {showDeductions ? 'Hide' : 'Show'} Deductions
             </button>
           </div>
           {showDeductions && (
-            <div className="mt-4">
-              <h2 className="text-2xl font-bold mb-4">Deductions</h2>
-              {Object.entries(deductions).map(([name, value]) => (
-                <div key={name} className="mb-4">
-                  <DraggableSlider
-                    label={name.replace('section', 'Section ')}
-                    value={value}
-                    setValue={(newValue) => handleDeductionChange(name, newValue)}
-                    min={0}
-                    max={DEDUCTION_LIMITS[name] || Infinity}
-                    step={1000}
-                    currencySymbol="₹"
-                    currentYear={new Date().getFullYear()}
-                    showYear={false}
-                  />
-                </div>
-              ))}
+            <div className="mt-3">
+              <h2 className="text-lg font-bold mb-2">Deductions</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {Object.entries(deductions).map(([name, value]) => (
+                  <div key={name}>
+                    <DraggableSlider
+                      label={name.replace('section', 'Section ')}
+                      value={value}
+                      setValue={(newValue) => handleDeductionChange(name, newValue)}
+                      min={0}
+                      max={DEDUCTION_LIMITS[name] || Infinity}
+                      step={1000}
+                      currencySymbol="₹"
+                      currentYear={new Date().getFullYear()}
+                      showYear={false}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-2xl font-bold mb-4">Tax Saving Suggestions</h2>
-          <div className="space-y-3">
+        <div className="bg-white p-3 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-3">Tax Saving Suggestions</h2>
+          <div className="grid grid-cols-2 gap-3">
             {getTaxSavingSuggestions().map((suggestion, index) => (
               <div 
                 key={index}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-3"
               >
                 <div className="flex items-start space-x-3">
                   <div className="bg-white bg-opacity-20 rounded-full p-2 mt-1">
@@ -360,22 +362,15 @@ export const IndiaTaxCalculator = () => {
                 </div>
               </div>
             ))}
-            {getTaxSavingSuggestions().length === 0 && (
-              <div className="text-gray-500 text-center py-4">
-                No additional tax saving suggestions available for your current tax regime.
-              </div>
-            )}
           </div>
         </div>
       </div>
 
-      <div className="lg:w-1/3 space-y-4">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-2xl font-bold mb-3">
-            Tax Breakdown
-          </h2>
+      <div className="lg:w-1/3 space-y-3">
+        <div className="bg-white p-3 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-2">Tax Breakdown</h2>
           
-          <div className="flex flex-col justify-center" style={{ height: '250px' }}>
+          <div className="flex flex-col justify-center" style={{ height: '220px' }}>
             <Doughnut 
               data={chartData} 
               options={{
@@ -402,8 +397,8 @@ export const IndiaTaxCalculator = () => {
             />
           </div>
 
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-3">
+            <div className="grid grid-cols-2 gap-3">
               <TaxResultCard 
                 label="Taxable Income" 
                 value={`₹${taxResult.taxableIncome.toLocaleString()}`} 
