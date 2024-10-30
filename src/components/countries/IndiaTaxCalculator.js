@@ -58,87 +58,109 @@ export const IndiaTaxCalculator = () => {
     }));
   };
 
-  useEffect(() => {
-    // Calculate tax here
-    const calculateTax = () => {
-      let taxableIncome = income;
-      let totalDeductions = 0;
-      
-      // Apply deductions for old regime only
-      if (taxRegime === 'old') {
-        totalDeductions = DEDUCTION_LIMITS.standardDeduction;
-        Object.values(deductions).forEach(deduction => {
-          totalDeductions += deduction;
-        });
-        taxableIncome = Math.max(0, income - totalDeductions);
-      }
-      
-      // Calculate tax based on regime and brackets
-      let tax = 0;
-      if (taxableIncome > 1000000) {
-        tax = (taxableIncome - 1000000) * 0.3 + 112500;
-      } else if (taxableIncome > 500000) {
-        tax = (taxableIncome - 500000) * 0.2 + 12500;
-      } else if (taxableIncome > 250000) {
-        tax = (taxableIncome - 250000) * 0.05;
-      }
-      
-      // Add capital gains tax
-      tax += shortTermCapitalGains * 0.15;
-      const taxableLongTermGains = Math.max(0, longTermCapitalGains - 100000);
-      tax += taxableLongTermGains * 0.1;
-      
-      const totalIncome = income + shortTermCapitalGains + longTermCapitalGains;
-      const netIncome = totalIncome - tax;
-      const effectiveTaxRate = totalIncome > 0 ? (tax / totalIncome) * 100 : 0;
-
-      setTaxResult({
-        taxableIncome: Math.max(0, taxableIncome),
-        tax: Math.max(0, tax),
-        netIncome,
-        effectiveTaxRate
-      });
-    };
-
-    calculateTax();
-  }, [income, shortTermCapitalGains, longTermCapitalGains, deductions, ageBracket, taxRegime]);
-
-  // Calculate individual tax components
-  const calculateTaxComponents = () => {
+  const calculateTax = () => {
     let taxableIncome = income;
     let totalDeductions = 0;
     
-    // Apply deductions for old regime only
-    if (taxRegime === 'old') {
+    // Apply deductions for oldregime only
+    if (taxRegime === 'oldregime') {
       totalDeductions = DEDUCTION_LIMITS.standardDeduction;
       Object.values(deductions).forEach(deduction => {
         totalDeductions += deduction;
       });
       taxableIncome = Math.max(0, income - totalDeductions);
     }
+
+    // Calculate basic tax based on regime
+    let tax = 0;
     
-    // Calculate basic income tax on taxable income
-    let basicIncomeTax = 0;
-    if (taxableIncome > 1000000) {
-      basicIncomeTax = (taxableIncome - 1000000) * 0.3 + 112500;
-    } else if (taxableIncome > 500000) {
-      basicIncomeTax = (taxableIncome - 500000) * 0.2 + 12500;
-    } else if (taxableIncome > 250000) {
-      basicIncomeTax = (taxableIncome - 250000) * 0.05;
+    if (taxRegime === 'oldregime') {
+      // Old Regime Tax Calculation
+      let exemptionLimit = 250000; // Default for below 60
+      
+      // Fix the age bracket conditions
+      if (ageBracket === '60to80') {
+        exemptionLimit = 300000;
+        console.log('Setting exemption limit for 60-80:', exemptionLimit); // Debug log
+      } else if (ageBracket === 'above80') {
+        exemptionLimit = 500000;
+      }
+
+      taxableIncome = Math.max(0, taxableIncome - exemptionLimit);
+      console.log('Age Bracket:', ageBracket, 'Exemption Limit:', exemptionLimit); // Debug log
+      
+      if (taxableIncome > 1000000) {
+        tax = (taxableIncome - 1000000) * 0.3 + 112500; // Tax for 5L-10L bracket
+      } else if (taxableIncome > 500000) {
+        tax = (taxableIncome - 500000) * 0.2 + 12500; // Tax for 2.5L-5L bracket
+      } else if (taxableIncome > 0) {
+        tax = taxableIncome * 0.05;
+      }
+    } else {
+      // New Regime Tax Calculation
+      if (income <= 300000) {
+        tax = 0;
+      } else {
+        // Apply standard deduction of 75,000 for salaried individuals
+        taxableIncome = Math.max(0, income - 75000);
+        
+        if (taxableIncome > 1500000) {
+          tax = (taxableIncome - 1500000) * 0.3 + 187500;
+        } else if (taxableIncome > 1200000) {
+          tax = (taxableIncome - 1200000) * 0.20 + 127500;
+        } else if (taxableIncome > 900000) {
+          tax = (taxableIncome - 900000) * 0.15 + 82500;
+        } else if (taxableIncome > 600000) {
+          tax = (taxableIncome - 600000) * 0.10 + 45000;
+        } else if (taxableIncome > 300000) {
+          tax = (taxableIncome - 300000) * 0.05;
+        }
+        
+        // Apply rebate under Section 87A
+        if (taxableIncome <= 700000) {
+          tax = 0;
+        }
+      }
     }
-
+    
+    // Add capital gains tax (same for both regimes)
     const stcgTax = shortTermCapitalGains * 0.15;
-    const ltcgTax = Math.max(0, longTermCapitalGains - 100000) * 0.1;
-
-    // Calculate net income after all taxes
-    const totalTax = basicIncomeTax + stcgTax + ltcgTax;
+    const taxableLongTermGains = Math.max(0, longTermCapitalGains - 100000);
+    const ltcgTax = taxableLongTermGains * 0.1;
+    
+    tax += stcgTax + ltcgTax;
+    
     const totalIncome = income + shortTermCapitalGains + longTermCapitalGains;
-    const netIncome = totalIncome - totalTax;
+    const netIncome = totalIncome - tax;
+    const effectiveTaxRate = totalIncome > 0 ? (tax / totalIncome) * 100 : 0;
 
     return {
+      taxableIncome: Math.max(0, taxableIncome),
+      tax: Math.max(0, tax),
+      netIncome,
+      effectiveTaxRate,
+      totalDeductions
+    };
+  };
+
+  useEffect(() => {
+    const result = calculateTax();
+    setTaxResult(result);
+  }, [income, shortTermCapitalGains, longTermCapitalGains, deductions, ageBracket, taxRegime]);
+
+  // Calculate individual tax components
+  const calculateTaxComponents = () => {
+    const result = calculateTax();
+    const { tax, totalDeductions, netIncome } = result;
+    
+    // Split the tax into components
+    const basicIncomeTax = tax - (shortTermCapitalGains * 0.15) - 
+      (Math.max(0, longTermCapitalGains - 100000) * 0.1);
+    
+    return {
       basicIncomeTax: Math.max(0, basicIncomeTax),
-      stcgTax,
-      ltcgTax,
+      stcgTax: shortTermCapitalGains * 0.15,
+      ltcgTax: Math.max(0, longTermCapitalGains - 100000) * 0.1,
       totalDeductions,
       netIncome
     };
@@ -390,11 +412,15 @@ export const IndiaTaxCalculator = () => {
                 <button
                   key={age}
                   className={`flex-1 px-4 py-2 rounded-md text-sm ${
-                    ageBracket === age.toLowerCase().replace(' ', '')
+                    ageBracket === age.toLowerCase().replace(/\s+/g, '')
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
-                  onClick={() => setAgeBracket(age.toLowerCase().replace(' ', ''))}
+                  onClick={() => {
+                    const newAgeBracket = age.toLowerCase().replace(/\s+/g, '');
+                    console.log('Setting age bracket to:', newAgeBracket); // Debug log
+                    setAgeBracket(newAgeBracket);
+                  }}
                 >
                   {age}
                 </button>
@@ -412,7 +438,11 @@ export const IndiaTaxCalculator = () => {
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
-                  onClick={() => setTaxRegime(regime.toLowerCase().replace(' ', ''))}
+                  onClick={() => {
+                    const newRegime = regime.toLowerCase().replace(' ', '');
+                    console.log('Selected Tax Regime:', newRegime);
+                    setTaxRegime(newRegime);
+                  }}
                 >
                   {regime}
                 </button>
@@ -420,35 +450,44 @@ export const IndiaTaxCalculator = () => {
             </div>
           </div>
           <div className="mt-3">
-            <button 
-              className="w-full py-1.5 px-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700"
-              onClick={() => setShowDeductions(!showDeductions)}
-            >
-              {showDeductions ? 'Hide' : 'Show'} Deductions
-            </button>
-          </div>
-          {showDeductions && (
-            <div className="mt-3">
-              <h2 className="text-lg font-bold mb-2">Deductions</h2>
-              <div className="grid grid-cols-2 gap-3">
-                {Object.entries(deductions).map(([name, value]) => (
-                  <div key={name}>
-                    <DraggableSlider
-                      label={name.replace('section', 'Section ')}
-                      value={value}
-                      setValue={(newValue) => handleDeductionChange(name, newValue)}
-                      min={0}
-                      max={DEDUCTION_LIMITS[name] || 100000}
-                      step={1000}
-                      currencySymbol="₹"
-                      currentYear={new Date().getFullYear()}
-                      showYear={false}
-                    />
+            {taxRegime === 'oldregime' ? (
+              <>
+                <button 
+                  className="w-full py-1.5 px-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700"
+                  onClick={() => setShowDeductions(!showDeductions)}
+                >
+                  {showDeductions ? 'Hide' : 'Show'} Deductions
+                </button>
+
+                {showDeductions && (
+                  <div className="mt-3">
+                    <h2 className="text-lg font-bold mb-2">Deductions</h2>
+                    <div className="grid grid-cols-2 gap-3">
+                      {Object.entries(deductions).map(([name, value]) => (
+                        <div key={name}>
+                          <DraggableSlider
+                            label={name.replace('section', 'Section ')}
+                            value={value}
+                            setValue={(newValue) => handleDeductionChange(name, newValue)}
+                            min={0}
+                            max={DEDUCTION_LIMITS[name] || 100000}
+                            step={1000}
+                            currencySymbol="₹"
+                            currentYear={new Date().getFullYear()}
+                            showYear={false}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
+              </>
+            ) : (
+              <div className="mt-2 p-3 bg-blue-50 text-blue-600 rounded-lg text-sm">
+                No deductions available in New Regime
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         <div className="bg-white p-3 rounded-lg shadow">
@@ -524,16 +563,16 @@ export const IndiaTaxCalculator = () => {
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-3">
             <div className="grid grid-cols-2 gap-3">
               <TaxResultCard 
+                label="Net Income" 
+                value={`₹${taxResult.netIncome.toLocaleString()}`} 
+              />
+              <TaxResultCard 
                 label="Taxable Income" 
                 value={`₹${taxResult.taxableIncome.toLocaleString()}`} 
               />
               <TaxResultCard 
                 label="Tax Amount" 
                 value={`₹${taxResult.tax.toLocaleString()}`} 
-              />
-              <TaxResultCard 
-                label="Net Income" 
-                value={`₹${taxResult.netIncome.toLocaleString()}`} 
               />
               <TaxResultCard 
                 label="Effective Tax Rate" 
