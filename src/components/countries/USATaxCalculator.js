@@ -1,7 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import TaxInputSlider from '../TaxInputSlider';
+import React, { useState, useEffect, useRef } from 'react';
+import { Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import DraggableSlider from '../TaxInputSlider';
+import html2canvas from 'html2canvas';
+import { saveAs } from 'file-saver';
 import usaTaxRates from '../../data/taxRates/usaTaxRates.json';
 import regions from '../../data/regions.json';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
+
+const TaxResultCard = ({ label, value }) => (
+  <div className="bg-blue-500 bg-opacity-20 rounded-lg p-3">
+    <div className="text-xs text-blue-100">{label}</div>
+    <div className="text-white text-lg font-semibold">{value}</div>
+  </div>
+);
 
 const calculateTaxForBrackets = (income, brackets) => {
   let tax = 0;
@@ -18,78 +31,367 @@ const calculateTaxForBrackets = (income, brackets) => {
   return tax;
 };
 
-const calculateUSATax = (income, state) => {
-  if (!usaTaxRates.federal || !usaTaxRates.state || !usaTaxRates.state[state]) {
-    console.error('Invalid tax data for USA');
-    return null;
-  }
-
-  const federalTax = calculateTaxForBrackets(income, usaTaxRates.federal);
-  const stateTax = calculateTaxForBrackets(income, usaTaxRates.state[state]);
-
-  const totalTax = federalTax + stateTax;
-  const netIncome = income - totalTax;
-  const effectiveTaxRate = (totalTax / income) * 100;
-
-  return {
-    federalTax: federalTax.toFixed(2),
-    stateTax: stateTax.toFixed(2),
-    totalTax: totalTax.toFixed(2),
-    netIncome: netIncome.toFixed(2),
-    effectiveTaxRate: effectiveTaxRate.toFixed(2)
-  };
-};
-
 export const USATaxCalculator = () => {
+  // Basic Information
   const [income, setIncome] = useState(50000);
-  const [state, setState] = useState('');
+  const [state, setState] = useState('California');
+  const [filingStatus, setFilingStatus] = useState('single');
+  const [age, setAge] = useState(30);
+  
+  // Additional Income
+  const [investmentIncome, setInvestmentIncome] = useState({
+    dividends: 0,
+    interest: 0,
+    shortTermGains: 0,
+    longTermGains: 0
+  });
+  
+  // Deductions State
+  const [deductionType, setDeductionType] = useState('standard');
+  const [itemizedDeductions, setItemizedDeductions] = useState({
+    mortgageInterest: 0,
+    charitableDonations: 0,
+    medicalExpenses: 0,
+    saltDeduction: 0, // State and Local Tax
+  });
+  
+  // Credits State
+  const [taxCredits, setTaxCredits] = useState({
+    childCredit: 0,
+    dependentCare: 0,
+    educationCredit: 0,
+    energyCredit: 0,
+  });
+  
+  // Tax Result State
   const [taxResult, setTaxResult] = useState(null);
+  const [showDeductions, setShowDeductions] = useState(false);
+
+  const calculateTax = () => {
+    if (!state) return null;
+
+    let totalIncome = income + 
+      investmentIncome.dividends + 
+      investmentIncome.interest + 
+      investmentIncome.shortTermGains;
+
+    // Calculate Standard Deduction based on filing status
+    let standardDeduction = filingStatus === 'married' ? 29200 : 14600;
+    if (age >= 65) standardDeduction += 1500; // Extra deduction for seniors
+
+    // Calculate total itemized deductions
+    const totalItemizedDeductions = Object.values(itemizedDeductions).reduce((a, b) => a + b, 0);
+    
+    // Use the larger of standard or itemized deductions
+    const applicableDeduction = deductionType === 'standard' ? 
+      standardDeduction : 
+      Math.max(totalItemizedDeductions, standardDeduction);
+
+    // Calculate taxable income
+    let taxableIncome = Math.max(0, totalIncome - applicableDeduction);
+
+    // Calculate federal tax
+    const federalTax = calculateTaxForBrackets(taxableIncome, usaTaxRates.federal);
+    
+    // Calculate state tax
+    const stateTax = calculateTaxForBrackets(taxableIncome, usaTaxRates.state[state]);
+
+    // Calculate capital gains tax
+    const longTermGainsTax = calculateLongTermCapitalGainsTax(investmentIncome.longTermGains, taxableIncome);
+
+    // Apply tax credits
+    const totalCredits = Object.values(taxCredits).reduce((a, b) => a + b, 0);
+    
+    // Calculate final tax
+    const totalTax = Math.max(0, federalTax + stateTax + longTermGainsTax - totalCredits);
+    const netIncome = totalIncome - totalTax;
+    const effectiveTaxRate = (totalTax / totalIncome) * 100;
+
+    return {
+      federalTax,
+      stateTax,
+      longTermGainsTax,
+      totalTax,
+      netIncome,
+      effectiveTaxRate,
+      applicableDeduction,
+      taxableIncome
+    };
+  };
+
+  const calculateLongTermCapitalGainsTax = (gains, taxableIncome) => {
+    // 2024 Long-term capital gains tax brackets
+    if (taxableIncome <= 44625) return gains * 0;
+    if (taxableIncome <= 492300) return gains * 0.15;
+    return gains * 0.20;
+  };
 
   useEffect(() => {
-    if (state) {
-      const result = calculateUSATax(income, state);
-      setTaxResult(result);
+    const result = calculateTax();
+    setTaxResult(result);
+  }, [income, state, filingStatus, investmentIncome, deductionType, itemizedDeductions, taxCredits]);
+
+  // Chart data with null checks
+  const chartData = {
+    labels: [
+      'Net Income',
+      'Federal Tax',
+      'State Tax'
+    ],
+    datasets: [{
+      data: taxResult ? [
+        taxResult.netIncome || 0,
+        taxResult.federalTax || 0,
+        taxResult.stateTax || 0
+      ] : [0, 0, 0],
+      backgroundColor: [
+        'rgb(59, 130, 246)', // Blue
+        'rgb(239, 68, 68)',  // Red
+        'rgb(249, 115, 22)'  // Orange
+      ],
+      borderWidth: 1
+    }]
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: {
+          generateLabels: (chart) => {
+            const data = chart.data;
+            if (data.labels.length && data.datasets.length) {
+              return data.labels.map((label, i) => {
+                const value = data.datasets[0].data[i] || 0;
+                return {
+                  text: `${label}: $${value.toLocaleString()}`,
+                  fillStyle: data.datasets[0].backgroundColor[i],
+                  hidden: false,
+                  index: i
+                };
+              });
+            }
+            return [];
+          }
+        }
+      }
     }
-  }, [income, state]);
+  };
+
+  // Add chart reference
+  const chartRef = useRef(null);
+
+  // Cleanup chart on unmount
+  useEffect(() => {
+    return () => {
+      if (chartRef.current) {
+        chartRef.current.destroy();
+      }
+    };
+  }, []);
+
+  const downloadPDF = async () => {
+    try {
+      const element = document.querySelector('.tax-calculator-container');
+      if (!element) return;
+      
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        allowTaint: true
+      });
+      const dataUrl = canvas.toDataURL('image/png');
+      saveAs(dataUrl, 'usa-tax-calculation.png');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    }
+  };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">USA Tax Calculator</h1>
-      
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
-        <select
-          className="w-full p-2 border rounded"
-          value={state}
-          onChange={(e) => setState(e.target.value)}
-        >
-          <option value="">Select a state</option>
-          {regions['United States'].map(state => (
-            <option key={state} value={state}>{state}</option>
-          ))}
-        </select>
+    <div className="tax-calculator-container flex flex-col lg:flex-row gap-3">
+      <div className="lg:w-2/3 space-y-3">
+        {/* Basic Information Section */}
+        <div className="bg-white p-3 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-3">Basic Information</h2>
+          
+          <div className="mb-4">
+            <DraggableSlider
+              label="Annual Income"
+              value={income}
+              setValue={setIncome}
+              min={0}
+              max={1000000}
+              step={1000}
+              currencySymbol="$"
+              currentYear={new Date().getFullYear()}
+              showYear={false}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Filing Status</label>
+              <select
+                className="w-full p-2 border rounded-lg bg-gray-50"
+                value={filingStatus}
+                onChange={(e) => setFilingStatus(e.target.value)}
+              >
+                <option value="single">Single</option>
+                <option value="married">Married Filing Jointly</option>
+                <option value="headOfHousehold">Head of Household</option>
+                <option value="marriedSeparate">Married Filing Separately</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+              <select
+                className="w-full p-2 border rounded-lg bg-gray-50"
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+              >
+                {regions['United States'].map(state => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Deductions Section */}
+        <div className="bg-white p-3 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-2">Deductions</h2>
+          
+          <div className="flex gap-3 mb-4">
+            <button
+              className={`flex-1 py-2 px-4 rounded-lg ${
+                deductionType === 'standard' 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-gray-200 text-gray-700'
+              }`}
+              onClick={() => setDeductionType('standard')}
+            >
+              Standard
+            </button>
+            <button
+              className={`flex-1 py-2 px-4 rounded-lg ${
+                deductionType === 'itemized' 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-gray-200 text-gray-700'
+              }`}
+              onClick={() => setDeductionType('itemized')}
+            >
+              Itemized
+            </button>
+          </div>
+
+          {deductionType === 'itemized' && (
+            <div className="space-y-3">
+              {Object.entries(itemizedDeductions).map(([name, value]) => (
+                <DraggableSlider
+                  key={name}
+                  label={name.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                  value={value}
+                  setValue={(newValue) => setItemizedDeductions(prev => ({
+                    ...prev,
+                    [name]: newValue
+                  }))}
+                  min={0}
+                  max={100000}
+                  step={100}
+                  currencySymbol="$"
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Continue with Tax Credits and other sections... */}
       </div>
 
-      <TaxInputSlider
-        label="Annual Income"
-        value={income}
-        setValue={setIncome}
-        min={0}
-        max={1000000}
-        step={1000}
-        currencySymbol="$"
-      />
+      <div className="lg:w-1/3 space-y-3">
+        <div className="bg-white p-3 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-2">Tax Breakdown</h2>
+          
+          <div className="flex flex-col justify-center" style={{ height: '220px' }}>
+            {taxResult && (
+              <Doughnut 
+                data={chartData} 
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  cutout: '60%',
+                  plugins: {
+                    legend: {
+                      display: true,
+                      position: 'right',
+                      labels: { 
+                        font: { size: 12 },
+                        padding: 5,
+                        boxWidth: 12
+                      }
+                    }
+                  },
+                  layout: {
+                    padding: {
+                      bottom: 5
+                    }
+                  }
+                }} 
+              />
+            )}
+          </div>
 
-      {taxResult && (
-        <div className="mt-6">
-          <h2 className="text-xl font-semibold">Tax Calculation Results</h2>
-          <p>Federal Tax: ${taxResult.federalTax}</p>
-          <p>State Tax: ${taxResult.stateTax}</p>
-          <p>Total Tax: ${taxResult.totalTax}</p>
-          <p>Net Income: ${taxResult.netIncome}</p>
-          <p>Effective Tax Rate: {taxResult.effectiveTaxRate}%</p>
+          {taxResult && (
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-3 mt-3">
+              <div className="grid grid-cols-2 gap-3">
+                <TaxResultCard 
+                  label="Net Income" 
+                  value={`$${(taxResult.netIncome || 0).toLocaleString()}`} 
+                />
+                <TaxResultCard 
+                  label="Total Tax" 
+                  value={`$${(taxResult.totalTax || 0).toLocaleString()}`} 
+                />
+                <TaxResultCard 
+                  label="Federal Tax" 
+                  value={`$${(taxResult.federalTax || 0).toLocaleString()}`} 
+                />
+                <TaxResultCard 
+                  label="State Tax" 
+                  value={`$${(taxResult.stateTax || 0).toLocaleString()}`} 
+                />
+              </div>
+            </div>
+          )}
         </div>
-      )}
+
+        <div className="bg-white p-3 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-2">Quick Actions</h2>
+          <div className="grid grid-cols-2 gap-2">
+            <button 
+              onClick={downloadPDF}
+              className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600 flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download Report
+            </button>
+            <button 
+              className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600 flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Compare States
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
