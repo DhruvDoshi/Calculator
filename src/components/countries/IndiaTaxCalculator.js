@@ -11,7 +11,7 @@ const DEDUCTION_LIMITS = {
   standardDeduction: 50000,
   section80C: 150000,
   section80D: 25000,
-  section80E: Infinity,
+  section80E: 100000,
   section80TTA: 10000,
   section24b: 200000
 };
@@ -54,7 +54,7 @@ export const IndiaTaxCalculator = () => {
   const handleDeductionChange = (name, value) => {
     setDeductions(prev => ({
       ...prev,
-      [name]: Math.min(Number(value) || 0, DEDUCTION_LIMITS[name] || Infinity)
+      [name]: Math.min(Number(value) || 0, DEDUCTION_LIMITS[name] || 100000)
     }));
   };
 
@@ -62,13 +62,15 @@ export const IndiaTaxCalculator = () => {
     // Calculate tax here
     const calculateTax = () => {
       let taxableIncome = income;
+      let totalDeductions = 0;
       
-      // Apply deductions
+      // Apply deductions for old regime only
       if (taxRegime === 'old') {
-        taxableIncome -= DEDUCTION_LIMITS.standardDeduction;
+        totalDeductions = DEDUCTION_LIMITS.standardDeduction;
         Object.values(deductions).forEach(deduction => {
-          taxableIncome -= deduction;
+          totalDeductions += deduction;
         });
+        taxableIncome = Math.max(0, income - totalDeductions);
       }
       
       // Calculate tax based on regime and brackets
@@ -103,18 +105,42 @@ export const IndiaTaxCalculator = () => {
 
   // Calculate individual tax components
   const calculateTaxComponents = () => {
-    const basicIncomeTax = taxResult.tax - (shortTermCapitalGains * 0.15) - (Math.max(0, longTermCapitalGains - 100000) * 0.1);
+    let taxableIncome = income;
+    let totalDeductions = 0;
+    
+    // Apply deductions for old regime only
+    if (taxRegime === 'old') {
+      totalDeductions = DEDUCTION_LIMITS.standardDeduction;
+      Object.values(deductions).forEach(deduction => {
+        totalDeductions += deduction;
+      });
+      taxableIncome = Math.max(0, income - totalDeductions);
+    }
+    
+    // Calculate basic income tax on taxable income
+    let basicIncomeTax = 0;
+    if (taxableIncome > 1000000) {
+      basicIncomeTax = (taxableIncome - 1000000) * 0.3 + 112500;
+    } else if (taxableIncome > 500000) {
+      basicIncomeTax = (taxableIncome - 500000) * 0.2 + 12500;
+    } else if (taxableIncome > 250000) {
+      basicIncomeTax = (taxableIncome - 250000) * 0.05;
+    }
+
     const stcgTax = shortTermCapitalGains * 0.15;
     const ltcgTax = Math.max(0, longTermCapitalGains - 100000) * 0.1;
-    const totalDeductions = taxRegime === 'old' ? 
-      (DEDUCTION_LIMITS.standardDeduction + Object.values(deductions).reduce((a, b) => a + b, 0)) : 0;
+
+    // Calculate net income after all taxes
+    const totalTax = basicIncomeTax + stcgTax + ltcgTax;
+    const totalIncome = income + shortTermCapitalGains + longTermCapitalGains;
+    const netIncome = totalIncome - totalTax;
 
     return {
-      basicIncomeTax,
+      basicIncomeTax: Math.max(0, basicIncomeTax),
       stcgTax,
       ltcgTax,
       totalDeductions,
-      netIncome: taxResult.netIncome
+      netIncome
     };
   };
 
@@ -412,7 +438,7 @@ export const IndiaTaxCalculator = () => {
                       value={value}
                       setValue={(newValue) => handleDeductionChange(name, newValue)}
                       min={0}
-                      max={DEDUCTION_LIMITS[name] || Infinity}
+                      max={DEDUCTION_LIMITS[name] || 100000}
                       step={1000}
                       currencySymbol="₹"
                       currentYear={new Date().getFullYear()}
