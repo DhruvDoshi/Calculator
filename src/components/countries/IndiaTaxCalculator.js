@@ -124,15 +124,13 @@ export const IndiaTaxCalculator = () => {
         taxComponents.netIncome,
         taxComponents.basicIncomeTax,
         taxComponents.stcgTax,
-        taxComponents.ltcgTax,
-        taxComponents.totalDeductions
+        taxComponents.ltcgTax
       ],
       backgroundColor: [
         'rgb(59, 130, 246)', // Blue for Net Income
         'rgb(239, 68, 68)',  // Red for Basic Tax
         'rgb(249, 115, 22)', // Orange for STCG
         'rgb(234, 179, 8)',  // Yellow for LTCG
-        'rgb(34, 197, 94)'   // Green for Deductions
       ],
       borderWidth: 1
     }]
@@ -377,9 +375,32 @@ export const IndiaTaxCalculator = () => {
             Tax Breakdown
           </h2>
           
-          <div className="flex flex-col items-center">
-            <Doughnut data={chartData} options={chartOptions} />
-        </div>
+          <div className="flex flex-col justify-center" style={{ height: '250px' }}>
+            <Doughnut 
+              data={chartData} 
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'right',
+                    labels: { 
+                      font: { size: 12 },
+                      padding: 5,
+                      boxWidth: 12
+                    }
+                  }
+                },
+                layout: {
+                  padding: {
+                    bottom: 5
+                  }
+                }
+              }} 
+            />
+          </div>
 
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4">
             <div className="grid grid-cols-2 gap-4">
