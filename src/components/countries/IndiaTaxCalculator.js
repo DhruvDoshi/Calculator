@@ -92,20 +92,93 @@ export const IndiaTaxCalculator = () => {
     calculateTax();
   }, [income, shortTermCapitalGains, longTermCapitalGains, deductions, ageBracket, taxRegime]);
 
+  // Calculate individual tax components
+  const calculateTaxComponents = () => {
+    const basicIncomeTax = taxResult.tax - (shortTermCapitalGains * 0.15) - (Math.max(0, longTermCapitalGains - 100000) * 0.1);
+    const stcgTax = shortTermCapitalGains * 0.15;
+    const ltcgTax = Math.max(0, longTermCapitalGains - 100000) * 0.1;
+    const totalDeductions = taxRegime === 'old' ? 
+      (DEDUCTION_LIMITS.standardDeduction + Object.values(deductions).reduce((a, b) => a + b, 0)) : 0;
+
+    return {
+      basicIncomeTax,
+      stcgTax,
+      ltcgTax,
+      totalDeductions,
+      netIncome: taxResult.netIncome
+    };
+  };
+
+  const taxComponents = calculateTaxComponents();
+
+  // Updated chart data with more detailed breakdown
   const chartData = {
-    labels: ['Tax', 'Net Income'],
-    datasets: [
-      {
-        data: [taxResult?.tax || 0, taxResult?.netIncome || income],
-        backgroundColor: ['#FF6384', '#36A2EB'],
-        hoverBackgroundColor: ['#FF6384', '#36A2EB']
-      }
-    ]
+    labels: [
+      'Net Income',
+      'Basic Income Tax',
+      'STCG Tax',
+      'LTCG Tax',
+    ],
+    datasets: [{
+      data: [
+        taxComponents.netIncome,
+        taxComponents.basicIncomeTax,
+        taxComponents.stcgTax,
+        taxComponents.ltcgTax,
+        taxComponents.totalDeductions
+      ],
+      backgroundColor: [
+        'rgb(59, 130, 246)', // Blue for Net Income
+        'rgb(239, 68, 68)',  // Red for Basic Tax
+        'rgb(249, 115, 22)', // Orange for STCG
+        'rgb(234, 179, 8)',  // Yellow for LTCG
+        'rgb(34, 197, 94)'   // Green for Deductions
+      ],
+      borderWidth: 1
+    }]
   };
 
   const chartOptions = {
     responsive: true,
-    maintainAspectRatio: false
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        position: 'right',
+        align: 'center',
+        labels: {
+          boxWidth: 12,
+          padding: 10,
+          font: {
+            size: 11
+          },
+          generateLabels: (chart) => {
+            const data = chart.data;
+            if (data.labels.length && data.datasets.length) {
+              return data.labels.map((label, i) => ({
+                text: `${label}: ₹${data.datasets[0].data[i].toLocaleString()}`,
+                fillStyle: data.datasets[0].backgroundColor[i],
+                hidden: false,
+                lineCap: 'butt',
+                lineDash: [],
+                lineDashOffset: 0,
+                lineJoin: 'miter',
+                lineWidth: 1,
+                strokeStyle: data.datasets[0].backgroundColor[i],
+                index: i
+              }));
+            }
+            return [];
+          }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return `${context.label}: ₹${context.raw.toLocaleString()}`;
+          }
+        }
+      }
+    }
   };
 
   const getTaxSavingSuggestions = () => {
@@ -300,31 +373,32 @@ export const IndiaTaxCalculator = () => {
 
       <div className="lg:w-1/3 space-y-4">
         <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-2xl font-bold mb-4">Tax Breakdown</h2>
-          <div className="h-64">
-            <Doughnut data={chartData} options={chartOptions} />
-          </div>
+          <h2 className="text-2xl font-bold mb-3">
+            Tax Breakdown
+          </h2>
           
-          <div className="mt-6">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4">
-              <div className="grid grid-cols-2 gap-4">
-                <TaxResultCard 
-                  label="Taxable Income" 
-                  value={`₹${taxResult.taxableIncome.toLocaleString()}`} 
-                />
-                <TaxResultCard 
-                  label="Tax Amount" 
-                  value={`₹${taxResult.tax.toLocaleString()}`} 
-                />
-                <TaxResultCard 
-                  label="Net Income" 
-                  value={`₹${taxResult.netIncome.toLocaleString()}`} 
-                />
-                <TaxResultCard 
-                  label="Effective Tax Rate" 
-                  value={`${taxResult.effectiveTaxRate.toFixed(1)}%`} 
-                />
-              </div>
+          <div className="flex flex-col items-center">
+            <Doughnut data={chartData} options={chartOptions} />
+        </div>
+
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4">
+            <div className="grid grid-cols-2 gap-4">
+              <TaxResultCard 
+                label="Taxable Income" 
+                value={`₹${taxResult.taxableIncome.toLocaleString()}`} 
+              />
+              <TaxResultCard 
+                label="Tax Amount" 
+                value={`₹${taxResult.tax.toLocaleString()}`} 
+              />
+              <TaxResultCard 
+                label="Net Income" 
+                value={`₹${taxResult.netIncome.toLocaleString()}`} 
+              />
+              <TaxResultCard 
+                label="Effective Tax Rate" 
+                value={`${taxResult.effectiveTaxRate.toFixed(1)}%`} 
+              />
             </div>
           </div>
         </div>
