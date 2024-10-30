@@ -328,15 +328,15 @@ export const IndiaTaxCalculator = () => {
         </div>
 
         <div className="bg-white p-3 rounded-lg shadow">
-          <h2 className="text-xl font-bold mb-3">Tax Saving Suggestions</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <h2 className="text-xl font-bold mb-2">Tax Saving Suggestions</h2>
+          <div className="grid grid-cols-1 gap-2">
             {getTaxSavingSuggestions().map((suggestion, index) => (
               <div 
                 key={index}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-3"
+                className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg p-2.5"
               >
-                <div className="flex items-start space-x-3">
-                  <div className="bg-white bg-opacity-20 rounded-full p-2 mt-1">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-blue-500 rounded-lg p-1.5 flex-shrink-0">
                     <svg 
                       className="w-4 h-4 text-white" 
                       fill="none" 
@@ -347,15 +347,15 @@ export const IndiaTaxCalculator = () => {
                         strokeLinecap="round" 
                         strokeLinejoin="round" 
                         strokeWidth={2} 
-                        d="M13 10V3L4 14h7v7l9-11h-7z" 
+                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" 
                       />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-white font-semibold">
+                    <h3 className="text-gray-800 font-medium text-sm">
                       {suggestion.title}
                     </h3>
-                    <p className="text-blue-100 text-sm mt-1">
+                    <p className="text-gray-600 text-sm">
                       {suggestion.description}
                     </p>
                   </div>
