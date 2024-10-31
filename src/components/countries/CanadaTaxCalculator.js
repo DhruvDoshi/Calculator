@@ -34,10 +34,10 @@ const chartOptions = {
 };
 
 // Tax result card component
-const TaxResultCard = ({ label, value }) => (
+const TaxResultCard = ({ label, value, isLarge = false }) => (
   <div className="bg-blue-500 bg-opacity-20 rounded-lg p-2">
-    <div className="text-[10px] text-blue-100">{label}</div>
-    <div className="text-white text-sm font-semibold truncate">{value}</div>
+    <div className={`${isLarge ? 'text-xs' : 'text-[10px]'} text-blue-100`}>{label}</div>
+    <div className={`text-white font-semibold truncate ${isLarge ? 'text-lg' : 'text-sm'}`}>{value}</div>
   </div>
 );
 
@@ -147,7 +147,7 @@ export const CanadaTaxCalculator = () => {
   // State management
   const [province, setProvince] = useState('');
   const [incomes, setIncomes] = useState({
-    employmentIncome: 0,
+    employmentIncome: 70000,
     selfEmploymentIncome: 0,
     otherIncome: 0,
     rrspContribution: 0,
@@ -570,14 +570,16 @@ export const CanadaTaxCalculator = () => {
             {taxResult && (
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-2 mt-2">
                 <div className="grid grid-cols-2 gap-2">
-                  {/* First Row: Total Income and Net Income */}
+                  {/* First Row: Total Income and Net Income - with larger fonts */}
                   <TaxResultCard 
                     label="Total Income" 
-                    value={`$${(taxResult.totalIncome || 0).toLocaleString()}`} 
+                    value={`$${(taxResult.totalIncome || 0).toLocaleString()}`}
+                    isLarge={true}
                   />
                   <TaxResultCard 
                     label="Net Income" 
-                    value={`$${(taxResult.netIncome || 0).toLocaleString()}`} 
+                    value={`$${(taxResult.netIncome || 0).toLocaleString()}`}
+                    isLarge={true}
                   />
 
                   {/* Second Row: Total Deductions and Deduction Rate */}
