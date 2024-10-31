@@ -49,10 +49,40 @@ export const USATaxCalculator = () => {
   // Deductions State
   const [deductionType, setDeductionType] = useState('standard');
   const [itemizedDeductions, setItemizedDeductions] = useState({
+    // Housing Related
     mortgageInterest: 0,
-    charitableDonations: 0,
+    propertyTax: 0,
+    
+    // Medical & Health
     medicalExpenses: 0,
-    saltDeduction: 0, // State and Local Tax
+    healthInsurance: 0,
+    hsa: 0, // Health Savings Account
+    
+    // Retirement & Investments
+    iraContribution: 0,
+    k401Contribution: 0,
+    
+    // Education
+    studentLoanInterest: 0,
+    educationExpenses: 0,
+    teacherExpenses: 0,
+    plan529Contribution: 0,
+    
+    // Other Common Deductions
+    charitableDonations: 0,
+    saltDeduction: 0, // State and Local Tax (capped at 10k)
+    workExpenses: 0,  // Unreimbursed work-related expenses
+    movingExpenses: 0, // For military only
+    
+    // Self-Employment Deductions
+    selfEmployedHealthInsurance: 0,
+    selfEmployedRetirement: 0,
+    businessExpenses: 0,
+    
+    // Additional Deductions
+    alimonyPaid: 0,
+    teacherExpenses: 0, // Educator expenses up to $250
+    casualtyLosses: 0, // From federally declared disasters
   });
   
   // Credits State
@@ -66,6 +96,28 @@ export const USATaxCalculator = () => {
   // Tax Result State
   const [taxResult, setTaxResult] = useState(null);
   const [showDeductions, setShowDeductions] = useState(false);
+
+  // Change to array for multiple selections
+  const [selectedDeductionCategories, setSelectedDeductionCategories] = useState([]);
+
+  // Define deduction categories
+  const deductionCategories = [
+    { id: 'housing', label: 'Housing', icon: '🏠' },
+    { id: 'medical', label: 'Medical & Health', icon: '🏥' },
+    { id: 'retirement', label: 'Retirement', icon: '💰' },
+    { id: 'education', label: 'Education', icon: '📚' },
+    { id: 'other', label: 'Other', icon: '📋' },
+    { id: 'selfEmployment', label: 'Self-Employment', icon: '💼' },
+  ];
+
+  // Toggle category selection
+  const toggleCategory = (categoryId) => {
+    setSelectedDeductionCategories(prev => 
+      prev.includes(categoryId)
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
 
   const calculateTax = () => {
     if (!state) return null;
@@ -289,22 +341,299 @@ export const USATaxCalculator = () => {
           </div>
 
           {deductionType === 'itemized' && (
-            <div className="space-y-3">
-              {Object.entries(itemizedDeductions).map(([name, value]) => (
-                <DraggableSlider
-                  key={name}
-                  label={name.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                  value={value}
-                  setValue={(newValue) => setItemizedDeductions(prev => ({
-                    ...prev,
-                    [name]: newValue
-                  }))}
-                  min={0}
-                  max={100000}
-                  step={100}
-                  currencySymbol="$"
-                />
-              ))}
+            <div className="space-y-4">
+              {/* Category Selection Buttons */}
+              <div className="grid grid-cols-3 gap-2">
+                {deductionCategories.map(category => (
+                  <button
+                    key={category.id}
+                    onClick={() => toggleCategory(category.id)}
+                    className={`p-2 rounded-lg flex flex-col items-center justify-center transition-colors
+                      ${selectedDeductionCategories.includes(category.id)
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                  >
+                    <span className="text-xl mb-1">{category.icon}</span>
+                    <span className="text-sm font-medium">{category.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Deduction Options Based on Selected Categories */}
+              {selectedDeductionCategories.length > 0 && (
+                <div className="mt-4 grid grid-cols-2 gap-6">
+                  {/* Housing Deductions */}
+                  {selectedDeductionCategories.includes('housing') && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Housing Deductions</h3>
+                      <div className="space-y-3">
+                        <DraggableSlider
+                          label="Mortgage Interest"
+                          value={itemizedDeductions.mortgageInterest}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, mortgageInterest: val}))}
+                          min={0}
+                          max={50000}
+                          step={100}
+                          currencySymbol="$"
+                        />
+                        <DraggableSlider
+                          label="Property Tax"
+                          value={itemizedDeductions.propertyTax}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, propertyTax: val}))}
+                          min={0}
+                          max={10000}
+                          step={100}
+                          currencySymbol="$"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Medical Deductions */}
+                  {selectedDeductionCategories.includes('medical') && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Medical & Health Deductions</h3>
+                      <div className="space-y-3">
+                        <DraggableSlider
+                          label="Medical Expenses"
+                          value={itemizedDeductions.medicalExpenses}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, medicalExpenses: val}))}
+                          min={0}
+                          max={50000}
+                          step={100}
+                          currencySymbol="$"
+                        />
+                        <DraggableSlider
+                          label="Health Insurance"
+                          value={itemizedDeductions.healthInsurance}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, healthInsurance: val}))}
+                          min={0}
+                          max={20000}
+                          step={100}
+                          currencySymbol="$"
+                        />
+                        <DraggableSlider
+                          label="HSA"
+                          value={itemizedDeductions.hsa}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, hsa: val}))}
+                          min={0}
+                          max={7750}
+                          step={50}
+                          currencySymbol="$"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Retirement Deductions */}
+                  {selectedDeductionCategories.includes('retirement') && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Retirement Deductions</h3>
+                      <div className="space-y-3">
+                        <DraggableSlider
+                          label="Traditional IRA"
+                          value={itemizedDeductions.iraContribution}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, iraContribution: val}))}
+                          min={0}
+                          max={7000}
+                          step={100}
+                          currencySymbol="$"
+                        />
+                        <DraggableSlider
+                          label="401(k)"
+                          value={itemizedDeductions.k401Contribution}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, k401Contribution: val}))}
+                          min={0}
+                          max={23000}
+                          step={100}
+                          currencySymbol="$"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Education Deductions */}
+                  {selectedDeductionCategories.includes('education') && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Education Deductions</h3>
+                      <div className="space-y-3">
+                        <DraggableSlider
+                          label="Student Loan Interest"
+                          value={itemizedDeductions.studentLoanInterest}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, studentLoanInterest: val}))}
+                          min={0}
+                          max={2500} // Annual limit for student loan interest deduction
+                          step={50}
+                          currencySymbol="$"
+                        />
+                        <DraggableSlider
+                          label="Education Expenses"
+                          value={itemizedDeductions.educationExpenses}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, educationExpenses: val}))}
+                          min={0}
+                          max={4000} // Typical limit for qualified education expenses
+                          step={100}
+                          currencySymbol="$"
+                        />
+                        <DraggableSlider
+                          label="Teacher Expenses"
+                          value={itemizedDeductions.teacherExpenses}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, teacherExpenses: val}))}
+                          min={0}
+                          max={300} // 2024 limit for educator expenses
+                          step={25}
+                          currencySymbol="$"
+                        />
+                        <DraggableSlider
+                          label="529 Plan Contribution"
+                          value={itemizedDeductions.plan529Contribution}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, plan529Contribution: val}))}
+                          min={0}
+                          max={16000} // Annual gift tax exclusion limit
+                          step={500}
+                          currencySymbol="$"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Other Common Deductions */}
+                  {selectedDeductionCategories.includes('other') && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Other Common Deductions</h3>
+                      <div className="space-y-3">
+                        <DraggableSlider
+                          label="Charitable Donations"
+                          value={itemizedDeductions.charitableDonations}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, charitableDonations: val}))}
+                          min={0}
+                          max={10000}
+                          step={100}
+                          currencySymbol="$"
+                        />
+                        <DraggableSlider
+                          label="Salt Deduction"
+                          value={itemizedDeductions.saltDeduction}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, saltDeduction: val}))}
+                          min={0}
+                          max={10000}
+                          step={100}
+                          currencySymbol="$"
+                        />
+                        <DraggableSlider
+                          label="Work Expenses"
+                          value={itemizedDeductions.workExpenses}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, workExpenses: val}))}
+                          min={0}
+                          max={10000}
+                          step={100}
+                          currencySymbol="$"
+                        />
+                        <DraggableSlider
+                          label="Moving Expenses"
+                          value={itemizedDeductions.movingExpenses}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, movingExpenses: val}))}
+                          min={0}
+                          max={10000}
+                          step={100}
+                          currencySymbol="$"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Self-Employment Deductions */}
+                  {selectedDeductionCategories.includes('selfEmployment') && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Self-Employment Deductions</h3>
+                      <div className="space-y-3">
+                        <DraggableSlider
+                          label="Self-Employed Health Insurance"
+                          value={itemizedDeductions.selfEmployedHealthInsurance}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, selfEmployedHealthInsurance: val}))}
+                          min={0}
+                          max={20000}
+                          step={100}
+                          currencySymbol="$"
+                        />
+                        <DraggableSlider
+                          label="Self-Employed Retirement"
+                          value={itemizedDeductions.selfEmployedRetirement}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, selfEmployedRetirement: val}))}
+                          min={0}
+                          max={7000}
+                          step={100}
+                          currencySymbol="$"
+                        />
+                        <DraggableSlider
+                          label="Business Expenses"
+                          value={itemizedDeductions.businessExpenses}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, businessExpenses: val}))}
+                          min={0}
+                          max={10000}
+                          step={100}
+                          currencySymbol="$"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Additional Deductions */}
+                  {selectedDeductionCategories.includes('additional') && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Additional Deductions</h3>
+                      <div className="space-y-3">
+                        <DraggableSlider
+                          label="Alimony Paid"
+                          value={itemizedDeductions.alimonyPaid}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, alimonyPaid: val}))}
+                          min={0}
+                          max={10000}
+                          step={100}
+                          currencySymbol="$"
+                        />
+                        <DraggableSlider
+                          label="Teacher Expenses"
+                          value={itemizedDeductions.teacherExpenses}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, teacherExpenses: val}))}
+                          min={0}
+                          max={250}
+                          step={25}
+                          currencySymbol="$"
+                        />
+                        <DraggableSlider
+                          label="Casualty Losses"
+                          value={itemizedDeductions.casualtyLosses}
+                          setValue={(val) => setItemizedDeductions(prev => ({...prev, casualtyLosses: val}))}
+                          min={0}
+                          max={10000}
+                          step={100}
+                          currencySymbol="$"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Summary of Selected Deductions */}
+              {Object.values(itemizedDeductions).some(value => value > 0) && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-2">Selected Deductions Summary</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(itemizedDeductions)
+                      .filter(([_, value]) => value > 0)
+                      .map(([key, value]) => (
+                        <div key={key} className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">
+                            {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                          </span>
+                          <span className="text-sm font-medium">${value.toLocaleString()}</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
