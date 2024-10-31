@@ -1,14 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Doughnut, Bar } from 'react-chartjs-2';
+import { 
+  Chart as ChartJS, 
+  ArcElement, 
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip, 
+  Legend 
+} from 'chart.js';
 import DraggableSlider from '../TaxInputSlider';
 import html2canvas from 'html2canvas';
 import { saveAs } from 'file-saver';
 import canadaTaxRates from '../../data/taxRates/canadaTaxRates.json';
 import regions from '../../data/regions.json';
 
-// Register ChartJS components
-ChartJS.register(ArcElement, Tooltip, Legend);
+// Register all ChartJS components in one place
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 // Chart options configuration
 const chartOptions = {
@@ -260,82 +277,223 @@ export const CanadaTaxCalculator = () => {
   };
 
   // Add the comparison view component
-  const ProvinceComparisonView = ({ onClose }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 rounded-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-white">Provincial Tax Comparison</h2>
-          <button 
-            onClick={onClose}
-            className="text-gray-400 hover:text-white"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+  const ProvinceComparisonView = ({ onClose }) => {
+    const comparisonData = calculateProvinceComparison();
+    
+    // Find the best province (lowest deductions)
+    const bestProvince = comparisonData[0]; // Already sorted by totalDeductions
 
-        {/* Content */}
-        <div className="p-4 overflow-auto max-h-[calc(90vh-80px)]">
-          {/* Income Summary */}
-          <div className="bg-gray-800 rounded-lg p-4 mb-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <div className="text-sm text-gray-400">Employment Income</div>
-                <div className="text-lg font-semibold text-white">${incomes.employmentIncome.toLocaleString()}</div>
+    // Bar chart options
+    const barOptions = {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            padding: 20,
+            font: { size: 12 }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) => `$${context.raw.toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: (value) => `$${value.toLocaleString()}`
+          }
+        }
+      }
+    };
+
+    // Chart data for tax breakdown
+    const taxBreakdownChart = {
+      labels: comparisonData.map(d => d.province),
+      datasets: [
+        {
+          label: 'Federal Tax',
+          data: comparisonData.map(d => d.federalTax),
+          backgroundColor: 'rgb(239, 68, 68)',
+          stack: 'stack0',
+        },
+        {
+          label: 'Provincial Tax',
+          data: comparisonData.map(d => d.provincialTax),
+          backgroundColor: 'rgb(16, 185, 129)',
+          stack: 'stack0',
+        },
+        {
+          label: 'CPP',
+          data: comparisonData.map(d => d.cpp),
+          backgroundColor: 'rgb(245, 158, 11)',
+          stack: 'stack0',
+        },
+        {
+          label: 'EI',
+          data: comparisonData.map(d => d.ei),
+          backgroundColor: 'rgb(139, 92, 246)',
+          stack: 'stack0',
+        }
+      ]
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl w-full max-w-7xl max-h-[90vh] overflow-hidden">
+          {/* Header */}
+          <div className="p-4 border-b flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">Provincial Tax Comparison</h2>
+              <p className="text-sm text-gray-500">Compare tax implications across different provinces</p>
+            </div>
+            <button 
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="p-6 overflow-auto max-h-[calc(90vh-80px)]">
+            {/* Best Province Recommendation */}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-6 border border-green-100">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-green-100 rounded-lg">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-1">Recommended Province</h3>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Based on your income of ${incomes.employmentIncome.toLocaleString()}, 
+                    here's the most tax-efficient province:
+                  </p>
+                  <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <div className="text-sm text-gray-500">Province</div>
+                        <div className="text-lg font-bold text-gray-900">{bestProvince.province}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">Net Income</div>
+                        <div className="text-lg font-bold text-green-600">${bestProvince.netIncome.toLocaleString()}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">Total Deductions</div>
+                        <div className="text-lg font-bold text-red-600">${bestProvince.totalDeductions.toLocaleString()}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">Deduction Rate</div>
+                        <div className="text-lg font-bold text-gray-900">{bestProvince.deductionRate.toFixed(1)}%</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="text-sm text-gray-400">Total Income</div>
-                <div className="text-lg font-semibold text-white">${(incomes.employmentIncome + incomes.selfEmploymentIncome + incomes.otherIncome).toLocaleString()}</div>
+            </div>
+
+            {/* Income Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-blue-50 rounded-xl p-4">
+                <div className="text-sm text-blue-600 mb-1">Employment Income</div>
+                <div className="text-2xl font-bold text-blue-900">
+                  ${incomes.employmentIncome.toLocaleString()}
+                </div>
+              </div>
+              <div className="bg-purple-50 rounded-xl p-4">
+                <div className="text-sm text-purple-600 mb-1">Total Income</div>
+                <div className="text-2xl font-bold text-purple-900">
+                  ${(incomes.employmentIncome + incomes.selfEmploymentIncome + incomes.otherIncome).toLocaleString()}
+                </div>
+              </div>
+              <div className="bg-green-50 rounded-xl p-4">
+                <div className="text-sm text-green-600 mb-1">Current Province</div>
+                <div className="text-2xl font-bold text-green-900">{province}</div>
+              </div>
+            </div>
+
+            {/* Charts Section with Legend */}
+            <div className="grid grid-cols-1 gap-6 mb-6">
+              <div className="bg-white rounded-xl shadow-sm border p-4">
+                <h3 className="text-lg font-semibold mb-4">Tax Breakdown by Province</h3>
+                <div className="h-[400px]">
+                  <Bar options={barOptions} data={taxBreakdownChart} />
+                </div>
+                {/* Legend explanation */}
+                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-red-500 rounded"></div>
+                    <span className="text-sm text-gray-600">Federal Tax</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-500 rounded"></div>
+                    <span className="text-sm text-gray-600">Provincial Tax</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-amber-500 rounded"></div>
+                    <span className="text-sm text-gray-600">CPP</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-purple-500 rounded"></div>
+                    <span className="text-sm text-gray-600">EI</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Detailed Comparison Table */}
+            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+              <div className="p-4 border-b">
+                <h3 className="text-lg font-semibold">Detailed Comparison</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Province</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600">Net Income</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600">Total Deductions</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600">Rate</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600">Federal Tax</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600">Provincial Tax</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600">CPP</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600">EI</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {comparisonData.map((result, index) => (
+                      <tr 
+                        key={result.province} 
+                        className={result.province === province ? 'bg-blue-50' : 'hover:bg-gray-50'}
+                      >
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{result.province}</td>
+                        <td className="px-4 py-3 text-sm text-right text-gray-900">${result.netIncome.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm text-right text-gray-900">${result.totalDeductions.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm text-right text-gray-900">{result.deductionRate.toFixed(1)}%</td>
+                        <td className="px-4 py-3 text-sm text-right text-gray-900">${result.federalTax.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm text-right text-gray-900">${result.provincialTax.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm text-right text-gray-900">${result.cpp.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm text-right text-gray-900">${result.ei.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
-
-          {/* Comparison Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="text-gray-400 border-b border-gray-700">
-                  <th className="p-3">Province</th>
-                  <th className="p-3 text-right">Net Income</th>
-                  <th className="p-3 text-right">Total Deductions</th>
-                  <th className="p-3 text-right">Deduction Rate</th>
-                  <th className="p-3 text-right">Federal Tax</th>
-                  <th className="p-3 text-right">Provincial Tax</th>
-                  <th className="p-3 text-right">CPP</th>
-                  <th className="p-3 text-right">EI</th>
-                </tr>
-              </thead>
-              <tbody>
-                {calculateProvinceComparison().map((result, index) => (
-                  <tr 
-                    key={result.province}
-                    className={`border-b border-gray-700 ${
-                      result.province === province 
-                        ? 'bg-blue-900 bg-opacity-20' 
-                        : index % 2 === 0 
-                          ? 'bg-gray-800' 
-                          : ''
-                    }`}
-                  >
-                    <td className="p-3 font-medium text-white">{result.province}</td>
-                    <td className="p-3 text-right text-white">${result.netIncome.toLocaleString()}</td>
-                    <td className="p-3 text-right text-white">${result.totalDeductions.toLocaleString()}</td>
-                    <td className="p-3 text-right text-white">{result.deductionRate.toFixed(1)}%</td>
-                    <td className="p-3 text-right text-white">${result.federalTax.toLocaleString()}</td>
-                    <td className="p-3 text-right text-white">${result.provincialTax.toLocaleString()}</td>
-                    <td className="p-3 text-right text-white">${result.cpp.toLocaleString()}</td>
-                    <td className="p-3 text-right text-white">${result.ei.toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 p-4">
