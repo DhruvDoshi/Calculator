@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import DraggableSlider from '../TaxInputSlider';
@@ -10,85 +10,142 @@ import regions from '../../data/regions.json';
 // Register ChartJS components
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+// Chart options configuration
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '60%',
+  plugins: {
+    legend: {
+      display: true,
+      position: 'right',
+      labels: { 
+        font: { size: 12 },
+        padding: 5,
+        boxWidth: 12
+      }
+    }
+  },
+  layout: {
+    padding: {
+      bottom: 5
+    }
+  }
+};
+
+// Tax result card component
 const TaxResultCard = ({ label, value }) => (
-  <div className="bg-blue-500 bg-opacity-20 rounded-lg p-3">
-    <div className="text-xs text-blue-100">{label}</div>
-    <div className="text-white text-lg font-semibold">{value}</div>
+  <div className="bg-blue-500 bg-opacity-20 rounded-lg p-2">
+    <div className="text-[10px] text-blue-100">{label}</div>
+    <div className="text-white text-sm font-semibold truncate">{value}</div>
   </div>
 );
 
-const calculateTaxForBrackets = (income, brackets) => {
-  let tax = 0;
-  let remainingIncome = income;
+// Deduction categories
+const deductionCategories = [
+  { id: 'general', label: 'General Deductions', icon: '📋' },
+  { id: 'health', label: 'Health Related', icon: '🏥' },
+  { id: 'education', label: 'Education', icon: '📚' },
+  { id: 'property', label: 'Property & Investment', icon: '🏠' },
+  { id: 'other', label: 'Other Credits', icon: '✨' },
+];
 
-  for (const bracket of brackets) {
-    if (remainingIncome <= 0) break;
+const calculateCanadianTax = (incomes, province, deductions) => {
+  try {
+    // Get tax rates for the selected province
+    const provincialRates = canadaTaxRates.provincial[province];
+    const federalRates = canadaTaxRates.federal;
     
-    const taxableAmount = Math.min(remainingIncome, (bracket.max || Infinity) - bracket.min);
-    tax += taxableAmount * bracket.rate;
-    remainingIncome -= taxableAmount;
-  }
+    if (!provincialRates || !federalRates) {
+      throw new Error('Tax rates not found');
+    }
 
-  return tax;
-};
+    // Calculate total income
+    const totalIncome = 
+      incomes.employmentIncome + 
+      incomes.selfEmploymentIncome + 
+      incomes.otherIncome + 
+      (incomes.capitalGains * 0.5) + // Only 50% of capital gains are taxable
+      (incomes.eligibleDividends * 1.38); // Gross-up eligible dividends by 38%
 
-const calculateCanadianTax = (incomes, province, itemizedDeductions) => {
-  if (!canadaTaxRates.federal || !canadaTaxRates.provincial || !canadaTaxRates.provincial[province]) {
-    console.error('Invalid tax data for Canada');
+    // Calculate total deductions
+    const totalDeductions = deductions ? 
+      Object.values(deductions).reduce((sum, val) => sum + val, 0) : 0;
+
+    // Calculate taxable income
+    const taxableIncome = Math.max(0, totalIncome - incomes.rrspContribution - totalDeductions);
+
+    // Calculate federal tax
+    let federalTax = 0;
+    let remainingIncome = taxableIncome;
+
+    for (const bracket of federalRates) {
+      const taxableAmount = Math.min(
+        remainingIncome, 
+        (bracket.max || Infinity) - bracket.min
+      );
+      if (taxableAmount <= 0) break;
+      
+      federalTax += taxableAmount * bracket.rate;
+      remainingIncome -= taxableAmount;
+    }
+
+    // Calculate provincial tax
+    let provincialTax = 0;
+    remainingIncome = taxableIncome;
+
+    for (const bracket of provincialRates) {
+      const taxableAmount = Math.min(
+        remainingIncome, 
+        (bracket.max || Infinity) - bracket.min
+      );
+      if (taxableAmount <= 0) break;
+      
+      provincialTax += taxableAmount * bracket.rate;
+      remainingIncome -= taxableAmount;
+    }
+
+    // Calculate CPP contributions
+    const employmentIncome = incomes.employmentIncome + incomes.selfEmploymentIncome;
+    const cppMaxIncome = 66600; // 2024 maximum pensionable earnings
+    const cppExemption = 3500; // Basic exemption amount
+    const cppRate = 0.0595; // 5.95% for 2024
+    
+    const cppContributableIncome = Math.min(
+      Math.max(employmentIncome - cppExemption, 0),
+      cppMaxIncome - cppExemption
+    );
+    const cpp = cppContributableIncome * cppRate;
+
+    // Calculate EI premiums
+    const eiMaxIncome = 63200; // 2024 maximum insurable earnings
+    const eiRate = 0.0163; // 1.63% for 2024
+    const ei = Math.min(incomes.employmentIncome, eiMaxIncome) * eiRate;
+
+    // Calculate total tax and net income
+    const totalTax = federalTax + provincialTax + cpp + ei;
+    const netIncome = totalIncome - totalTax;
+
+    return {
+      totalIncome: totalIncome,
+      taxableIncome: taxableIncome,
+      federalTax: federalTax,
+      provincialTax: provincialTax,
+      cpp: cpp,
+      ei: ei,
+      totalTax: totalTax,
+      netIncome: netIncome,
+      effectiveTaxRate: (totalTax / totalIncome * 100) || 0
+    };
+  } catch (error) {
+    console.error('Error calculating tax:', error);
     return null;
   }
-
-  // Calculate total income
-  const totalIncome = 
-    incomes.employmentIncome + 
-    incomes.selfEmploymentIncome + 
-    incomes.otherIncome + 
-    (incomes.capitalGains * 0.5) + // Only 50% of capital gains are taxable
-    (incomes.eligibleDividends * 1.38); // Gross-up eligible dividends by 38%
-
-  // Calculate total deductions
-  const totalDeductions = itemizedDeductions ? Object.values(itemizedDeductions).reduce((sum, val) => sum + val, 0) : 0;
-
-  // Calculate taxable income
-  const taxableIncome = Math.max(0, totalIncome - incomes.rrspContribution - totalDeductions);
-
-  // Calculate federal tax
-  const federalTax = calculateTaxForBrackets(taxableIncome, canadaTaxRates.federal);
-  
-  // Calculate provincial tax
-  const provincialTax = calculateTaxForBrackets(taxableIncome, canadaTaxRates.provincial[province]);
-
-  // Calculate CPP contributions
-  const { maxContributionIncome, basicExemptionAmount, contributionRate } = canadaTaxRates.cpp;
-  const contributableIncome = Math.min(
-    Math.max(incomes.employmentIncome + incomes.selfEmploymentIncome - basicExemptionAmount, 0),
-    maxContributionIncome - basicExemptionAmount
-  );
-  const cpp = contributableIncome * contributionRate;
-
-  // Calculate EI premiums
-  const { maxInsurableEarnings, contributionRate: eiRate } = canadaTaxRates.ei;
-  const ei = Math.min(incomes.employmentIncome, maxInsurableEarnings) * eiRate;
-
-  // Calculate total tax and net income
-  const totalTax = federalTax + provincialTax + cpp + ei;
-  const netIncome = totalIncome - totalTax;
-  const effectiveTaxRate = (totalTax / totalIncome) * 100;
-
-  return {
-    totalIncome: totalIncome.toFixed(2),
-    taxableIncome: taxableIncome.toFixed(2),
-    federalTax: federalTax.toFixed(2),
-    provincialTax: provincialTax.toFixed(2),
-    cpp: cpp.toFixed(2),
-    ei: ei.toFixed(2),
-    totalTax: totalTax.toFixed(2),
-    netIncome: netIncome.toFixed(2),
-    effectiveTaxRate: effectiveTaxRate.toFixed(2)
-  };
 };
 
 export const CanadaTaxCalculator = () => {
+  // State management
+  const [province, setProvince] = useState('');
   const [incomes, setIncomes] = useState({
     employmentIncome: 0,
     selfEmploymentIncome: 0,
@@ -97,9 +154,7 @@ export const CanadaTaxCalculator = () => {
     capitalGains: 0,
     eligibleDividends: 0
   });
-  const [province, setProvince] = useState('');
   const [selectedDeductionCategories, setSelectedDeductionCategories] = useState([]);
-  const [taxResult, setTaxResult] = useState(null);
   const [itemizedDeductions, setItemizedDeductions] = useState({
     // General Deductions
     unionDues: 0,
@@ -130,16 +185,9 @@ export const CanadaTaxCalculator = () => {
     digitalNewsCredit: 0,
     northernDeduction: 0
   });
+  const [taxResult, setTaxResult] = useState(null);
 
-  // Define deduction categories
-  const deductionCategories = [
-    { id: 'general', label: 'General Deductions', icon: '📋' },
-    { id: 'health', label: 'Health Related', icon: '🏥' },
-    { id: 'education', label: 'Education', icon: '📚' },
-    { id: 'property', label: 'Property & Investment', icon: '🏠' },
-    { id: 'other', label: 'Other Credits', icon: '✨' },
-  ];
-
+  // Calculate tax when inputs change
   useEffect(() => {
     if (province) {
       const result = calculateCanadianTax(incomes, province, itemizedDeductions);
@@ -147,6 +195,28 @@ export const CanadaTaxCalculator = () => {
     }
   }, [incomes, province, itemizedDeductions]);
 
+  // Category toggle handler
+  const toggleCategory = (categoryId) => {
+    setSelectedDeductionCategories(prev => 
+      prev.includes(categoryId)
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
+  // Download report handler
+  const downloadPDF = async () => {
+    try {
+      const element = document.querySelector('.tax-calculator-container');
+      const canvas = await html2canvas(element);
+      const dataURL = canvas.toDataURL('image/png');
+      saveAs(dataURL, 'tax-calculation.png');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    }
+  };
+
+  // Chart data
   const chartData = {
     labels: ['Net Income', 'Federal Tax', 'Provincial Tax', 'CPP', 'EI'],
     datasets: [{
@@ -158,33 +228,14 @@ export const CanadaTaxCalculator = () => {
         parseFloat(taxResult.ei)
       ] : [],
       backgroundColor: [
-        '#60A5FA', // blue-400
-        '#F87171', // red-400
-        '#34D399', // green-400
-        '#FBBF24', // yellow-400
-        '#A78BFA'  // purple-400
+        'rgb(59, 130, 246)', // Blue
+        'rgb(239, 68, 68)',  // Red
+        'rgb(16, 185, 129)', // Green
+        'rgb(245, 158, 11)', // Amber
+        'rgb(139, 92, 246)'  // Purple
       ],
       borderWidth: 0
     }]
-  };
-
-  const toggleCategory = (categoryId) => {
-    setSelectedDeductionCategories(prev => 
-      prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
-    );
-  };
-
-  const downloadPDF = async () => {
-    try {
-      const element = document.querySelector('.tax-calculator-container');
-      const canvas = await html2canvas(element);
-      const dataURL = canvas.toDataURL('image/png');
-      saveAs(dataURL, 'tax-calculation.png');
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-    }
   };
 
   return (
@@ -491,68 +542,87 @@ export const CanadaTaxCalculator = () => {
         <div className="lg:w-1/3 space-y-4">
           {/* Tax Breakdown */}
           <div className="bg-white p-3 rounded-lg shadow">
-            <h2 className="text-xl font-bold mb-2">Tax Breakdown</h2>
+            <h2 className="text-lg font-semibold mb-2">Tax Breakdown</h2>
             
             <div className="flex flex-col justify-center" style={{ height: '220px' }}>
               {taxResult && (
                 <Doughnut 
                   data={chartData} 
                   options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '60%',
+                    ...chartOptions,
                     plugins: {
+                      ...chartOptions.plugins,
                       legend: {
-                        display: true,
-                        position: 'right',
-                        labels: { 
-                          font: { size: 12 },
-                          padding: 5,
-                          boxWidth: 12
+                        ...chartOptions.plugins.legend,
+                        labels: {
+                          ...chartOptions.plugins.legend.labels,
+                          font: { size: 11 },
+                          padding: 3,
+                          boxWidth: 10
                         }
                       }
-                    },
-                    layout: {
-                      padding: {
-                        bottom: 5
-                      }
                     }
-                  }} 
+                  }}
                 />
               )}
             </div>
 
             {taxResult && (
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-3 mt-3">
-                <div className="grid grid-cols-2 gap-3">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-2 mt-2">
+                <div className="grid grid-cols-2 gap-2">
+                  {/* First Row: Total Income and Net Income */}
+                  <TaxResultCard 
+                    label="Total Income" 
+                    value={`$${(taxResult.totalIncome || 0).toLocaleString()}`} 
+                  />
                   <TaxResultCard 
                     label="Net Income" 
                     value={`$${(taxResult.netIncome || 0).toLocaleString()}`} 
                   />
+
+                  {/* Second Row: Total Deductions and Deduction Rate */}
                   <TaxResultCard 
-                    label="Total Tax" 
-                    value={`$${(taxResult.totalTax || 0).toLocaleString()}`} 
+                    label="Total Deductions" 
+                    value={`$${((taxResult.totalTax + taxResult.ei + taxResult.cpp) || 0).toLocaleString()}`} 
                   />
                   <TaxResultCard 
-                    label="Federal Tax" 
-                    value={`$${(taxResult.federalTax || 0).toLocaleString()}`} 
+                    label="Deduction Rate" 
+                    value={`${(((taxResult.totalTax + taxResult.ei + taxResult.cpp) / taxResult.totalIncome * 100) || 0).toFixed(1)}%`} 
                   />
-                  <TaxResultCard 
-                    label="Provincial Tax" 
-                    value={`$${(taxResult.provincialTax || 0).toLocaleString()}`} 
-                  />
+
+                  {/* Third Row: Federal Tax, Provincial Tax, EI, and CPP */}
+                  <div className="col-span-2 grid grid-cols-4 gap-2">
+                    <TaxResultCard 
+                      label="Federal Tax" 
+                      value={`$${(taxResult.federalTax || 0).toLocaleString()}`} 
+                    />
+                    <TaxResultCard 
+                      label="Provincial Tax" 
+                      value={`$${(taxResult.provincialTax || 0).toLocaleString()}`} 
+                    />
+                    <TaxResultCard 
+                      label="EI Premium" 
+                      value={`$${(taxResult.ei || 0).toLocaleString()}`} 
+                    />
+                    <TaxResultCard 
+                      label="CPP" 
+                      value={`$${(taxResult.cpp || 0).toLocaleString()}`} 
+                    />
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white p-3 rounded-lg shadow">
-            <h2 className="text-xl font-bold mb-2">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-2">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+            <div className="p-4 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-800">Quick Actions</h2>
+            </div>
+            <div className="p-4 grid grid-cols-2 gap-2">
               <button 
                 onClick={downloadPDF}
-                className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600 flex items-center justify-center gap-2"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-sm font-medium"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -560,7 +630,7 @@ export const CanadaTaxCalculator = () => {
                 Download Report
               </button>
               <button 
-                className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600 flex items-center justify-center gap-2"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-sm font-medium"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
