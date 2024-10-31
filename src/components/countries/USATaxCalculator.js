@@ -615,25 +615,6 @@ export const USATaxCalculator = () => {
                   )}
                 </div>
               )}
-
-              {/* Summary of Selected Deductions */}
-              {Object.values(itemizedDeductions).some(value => value > 0) && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-2">Selected Deductions Summary</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(itemizedDeductions)
-                      .filter(([_, value]) => value > 0)
-                      .map(([key, value]) => (
-                        <div key={key} className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">
-                            {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                          </span>
-                          <span className="text-sm font-medium">${value.toLocaleString()}</span>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -698,6 +679,7 @@ export const USATaxCalculator = () => {
           )}
         </div>
 
+        {/* Quick Actions */}
         <div className="bg-white p-3 rounded-lg shadow">
           <h2 className="text-xl font-bold mb-2">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-2">
@@ -720,6 +702,33 @@ export const USATaxCalculator = () => {
             </button>
           </div>
         </div>
+
+        {/* Selected Deductions Summary - Only show if there are deductions */}
+        {Object.values(itemizedDeductions).some(value => value > 0) && (
+          <div className="bg-white p-3 rounded-lg shadow">
+            <h2 className="text-xl font-bold mb-2">Selected Deductions Summary</h2>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(itemizedDeductions)
+                .filter(([_, value]) => value > 0)
+                .map(([key, value]) => (
+                  <div key={key} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                    <span className="text-sm text-gray-600">
+                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                    </span>
+                    <span className="text-sm font-medium">${value.toLocaleString()}</span>
+                  </div>
+                ))}
+            </div>
+            <div className="mt-3 p-2 bg-blue-50 rounded flex justify-between items-center">
+              <span className="text-blue-700 font-medium">Total Deductions</span>
+              <span className="text-blue-700 font-bold">
+                ${Object.values(itemizedDeductions)
+                  .reduce((sum, value) => sum + value, 0)
+                  .toLocaleString()}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
