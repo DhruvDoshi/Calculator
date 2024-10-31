@@ -187,6 +187,9 @@ export const CanadaTaxCalculator = () => {
   });
   const [taxResult, setTaxResult] = useState(null);
 
+  // Add state for comparison view
+  const [showComparison, setShowComparison] = useState(false);
+
   // Calculate tax when inputs change
   useEffect(() => {
     if (province) {
@@ -237,6 +240,102 @@ export const CanadaTaxCalculator = () => {
       borderWidth: 0
     }]
   };
+
+  // Add comparison calculation function
+  const calculateProvinceComparison = () => {
+    return regions['Canada'].map(provinceName => {
+      const result = calculateCanadianTax(incomes, provinceName, itemizedDeductions);
+      return {
+        province: provinceName,
+        totalIncome: result.totalIncome,
+        netIncome: result.netIncome,
+        totalDeductions: result.totalTax + result.ei + result.cpp,
+        deductionRate: ((result.totalTax + result.ei + result.cpp) / result.totalIncome * 100),
+        federalTax: result.federalTax,
+        provincialTax: result.provincialTax,
+        cpp: result.cpp,
+        ei: result.ei
+      };
+    }).sort((a, b) => a.totalDeductions - b.totalDeductions);
+  };
+
+  // Add the comparison view component
+  const ProvinceComparisonView = ({ onClose }) => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-gray-900 rounded-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-white">Provincial Tax Comparison</h2>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-white"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-4 overflow-auto max-h-[calc(90vh-80px)]">
+          {/* Income Summary */}
+          <div className="bg-gray-800 rounded-lg p-4 mb-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <div className="text-sm text-gray-400">Employment Income</div>
+                <div className="text-lg font-semibold text-white">${incomes.employmentIncome.toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-400">Total Income</div>
+                <div className="text-lg font-semibold text-white">${(incomes.employmentIncome + incomes.selfEmploymentIncome + incomes.otherIncome).toLocaleString()}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Comparison Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-gray-400 border-b border-gray-700">
+                  <th className="p-3">Province</th>
+                  <th className="p-3 text-right">Net Income</th>
+                  <th className="p-3 text-right">Total Deductions</th>
+                  <th className="p-3 text-right">Deduction Rate</th>
+                  <th className="p-3 text-right">Federal Tax</th>
+                  <th className="p-3 text-right">Provincial Tax</th>
+                  <th className="p-3 text-right">CPP</th>
+                  <th className="p-3 text-right">EI</th>
+                </tr>
+              </thead>
+              <tbody>
+                {calculateProvinceComparison().map((result, index) => (
+                  <tr 
+                    key={result.province}
+                    className={`border-b border-gray-700 ${
+                      result.province === province 
+                        ? 'bg-blue-900 bg-opacity-20' 
+                        : index % 2 === 0 
+                          ? 'bg-gray-800' 
+                          : ''
+                    }`}
+                  >
+                    <td className="p-3 font-medium text-white">{result.province}</td>
+                    <td className="p-3 text-right text-white">${result.netIncome.toLocaleString()}</td>
+                    <td className="p-3 text-right text-white">${result.totalDeductions.toLocaleString()}</td>
+                    <td className="p-3 text-right text-white">{result.deductionRate.toFixed(1)}%</td>
+                    <td className="p-3 text-right text-white">${result.federalTax.toLocaleString()}</td>
+                    <td className="p-3 text-right text-white">${result.provincialTax.toLocaleString()}</td>
+                    <td className="p-3 text-right text-white">${result.cpp.toLocaleString()}</td>
+                    <td className="p-3 text-right text-white">${result.ei.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 p-4">
@@ -632,7 +731,8 @@ export const CanadaTaxCalculator = () => {
                 Download Report
               </button>
               <button 
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-sm font-medium"
+                onClick={() => setShowComparison(true)}
+                className="flex items-center justify-center gap-2 p-3 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -642,6 +742,11 @@ export const CanadaTaxCalculator = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Add the modal at the end of the component */}
+      {showComparison && (
+        <ProvinceComparisonView onClose={() => setShowComparison(false)} />
       )}
     </div>
   );
